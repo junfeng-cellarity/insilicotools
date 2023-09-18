@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+            text-align: center;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <title>ADME Models</title>
+</head>
+<body>
+<p> <A name="BB"><b>BB ratio</b></A>: This value is generated from the Volsurf+ model as logBB and transformed into brain/plasma ratio, thus the result in on a linear scale. The model is based on a PLS approach and on a set of approximately 500 compounds which are distributed among good, moderate and poor brain penetrant. The model does NOT take into account active transport or efflux, plasma or brain binding and the computed value is to be considered based on total concentrations. The method is based on the initial work published by Crivori et al. (J. Med. Chem. 2000, 43, 2204-2216) with subsequent data addition.
+</p>
+<p>
+    <A name="MoKa"><b>MoKa</b></A>: The values reported are the most basic and most acidic pKa values (MB, blue and MA, red) calculated by MoKa (Milletti et al, J. Chem. Inf. Model. 2007, 47, 2172-2181) which is based on 54 in silico models stemming from different group topology and trained on more than 27, 000 compounds overall. All the values predicted, not only MA and MB, are also annotated above the corresponding atoms. MoKa is trained with in-house compounds generally every quarter with in house compounds. Good results have been reported by several groups regarding improvement of accuracy upon training with internal (in-house) compounds (Milletti et al. Eur. J. Med. Chem. 2010, 45, 4270-4279; Gedeck et al. J. Chem. Inf. Model. 2015, 55, 1449-1459). More detailed profiles can be calculated upon request to any of the members of the Computational Chemistry group.
+</p>
+<p>
+    <A name="MoKaLogP"><b>Moka logP/logD</b></A>: This values utilizes the logP developed by Molecular Discovery and available in both MoKa and Volsurf. The model is one of the most accurate ones but ClogP, Chemaxon and Xlogp (as implemented in Vortex) are also provided,  upon checking the corresponding calculation, and a consensus (average plus s.d.) across models is also available. MoKa pKa is calculated and utilized for the logD prediction (at pH 7.4) but more detailed calculations (e.g. a complete pH-lipophilicity profile) can be requested from any of the members of the Computational Chemistry group. With the calculation of logP, regardless of the selection of logD, the MoKa pKa predictions are also annotated above the corresponding atoms.
+</p>
+
+<p>
+    <A NAME="PPB"><B>Plasma Protein Binding</B></A>
+<ul>
+    <li>➢&#9658;Source of the compounds : Internal database
+    </li>
+    <li>➢&#9658;Total number of compounds
+        <ul>
+            <li>➢Training set 1679 compounds</li>
+            <li>➢Test set 419 compounds</li>
+        </ul>
+    </li>
+    <li>➢&#9658;Experiment info:
+        <ul>
+            <li>percentage of unbound (%)</li>
+            <li>Organism:Human</li>
+            <li>Concentraion: 2.000 &#956M</li>
+        </ul>
+    </li>
+    <li>➢&#9658;RMSE = 0.37, R<sup>2</sup> = 0.81</li>
+</ul>
+</p>
+
+<p>
+    <A NAME="hERG"><B>hERG Inhibition</B></A>
+<ul>
+    <li>➢&#9658;Source of the compounds : Internal database
+    </li>
+    <li>➢&#9658;Total number of compounds
+        <ul>
+            <li>➢Training set 542 compounds</li>
+            <li>➢Test set 135 compounds</li>
+        </ul>
+    </li>
+    <li>➢&#9658;Experiment info:
+        <ul>
+            <li>hERG potassium channel</li>
+            <li>Organism:Human</li>
+            <li>IC50 (&#956M)</li>
+            <li>fast patch clamp</li>
+        </ul>
+    </li>
+    <li>➢&#9658;RMSE = 0.47, R<sup>2</sup> = 0.67</li>
+</ul>
+</p>
+
+
+<p>
+    <A NAME="hERG"><b>VDss</b></A>: This model predicts volume of distribution at steady-state (VDss) in human using a Random Forest algorithm. The training set consists of 1096 literature compounds all carefully analyzed and curated and from i.v. studies only. This training set has a large diversity, for example, MW range from 40 to 2000. The model uses 33 calculated descriptors including charge, hydrogen bond, lipophilicity, PSA, 3D pharmacophoric features and 2D SMARTS. This calculation requires only a compound number or a structure file for virtual analysis.    The out-of-bag analysis of the model showed a Geometric Mean Fold-Error (GMFE) of 2.1, with 61% of the predictions within 2-fold error and 76% within 3-fold prediction. Besides, we used leave-class-out method to evaluate the model and the model yielded a GMFE of 2.0, with 62% of the predictions within 2-fold error and 80% within 3-fold error. We also validated the model using 2 external test sets (34 and 60 compounds) for which we had either new data not included in the training set (34) or in vivo animal data (60) with scaling performance (in vivo-in vivo)comparison with the in silico model. The model performs well on both, and especially on the in vivo-in vivo comparative test. The table showing the latter results is reported below.
+</p>
+<table style="width:50%">
+    <tr>
+        <td>&nbsp;</td>
+        <td colspan="4">In vivo best methods for VDss scaling</td>
+        <td>In Silico model</td>
+    </tr>
+    <tr>
+        <td>&nbsp;</td>
+        <td>MLR</td>
+        <td>WAJIMA</td>
+        <td>Monkey Prop.</td>
+        <td>Average of Best Methods</td>
+        <td>RF33</td>
+    </tr>
+    <tr>
+        <td>GMFE</td>
+        <td>1.7</td>
+        <td>1.7</td>
+        <td>1.6</td>
+        <td>1.6</td>
+        <td><b>1.6</b></td>
+    </tr>
+    <tr>
+        <td>%<2-fold</td>
+        <td>72</td>
+        <td>78</td>
+        <td>77</td>
+        <td>80</td>
+        <td><b>80</b></td>
+    </tr>
+    <tr>
+        <td>%<3-fold</td>
+        <td>87</td>
+        <td>90</td>
+        <td>92</td>
+        <td>93</td>
+        <td><b>90</b></td>
+    </tr>
+    <tr>
+        <td>Max FE</td>
+        <td>7</td>
+        <td>22</td>
+        <td>15</td>
+        <td>23</td>
+        <td><b>7</b></td>
+    </tr>
+</table>
+
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+Signature-Version: 1.0
+SHA-256-Digest-Manifest-Main-Attributes: +qd2FKxwRbcgVIT7Bs31ORNCNFk/J
+ 4mA1WYlgvvdgEo=
+SHA-256-Digest-Manifest: DeQJLoCJPHELQDFk1CsvyQPUm2xDfmrpO8ANnKGIeDc=
+Created-By: 1.8.0_51 (Azul Systems, Inc.)
+
+Name: libjogl_desktop.so
+SHA-256-Digest: XvXKEAPUtL3A9estQfiVP4lkQDGc1X9BiicZYlP77/s=
+
+Name: libjogl_mobile.so
+SHA-256-Digest: tPW13TgiaLhJPevMRVrvh4EazBXSvtPmYizUWn4ORgI=
+
+Name: libnewt.so
+SHA-256-Digest: zrmMMSD4q0EUYCWvJSVUckcRDf/4w1AuV/ve6K5ZJAY=
+
+Name: libnativewindow_x11.so
+SHA-256-Digest: 235Ec0UwbAg3qA6/8n7fEdzjMvRd78N6WKse8F4wXbM=
+
+Name: libnativewindow_awt.so
+SHA-256-Digest: p082kDGU7opUMOj2gBBPjF5xyOwtTPOBPH57CUBCbzQ=
+

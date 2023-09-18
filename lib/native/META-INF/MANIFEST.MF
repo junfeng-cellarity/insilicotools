@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Created-By: 1.8.0_51 (Azul Systems, Inc.)
+
+Name: libjogl_desktop.so
+SHA-256-Digest: HU3kZaMWG8IYq+w9ecn6aJoaVN3IqFBp26/8LHYmy1g=
+
+Name: libjogl_mobile.so
+SHA-256-Digest: QUtzJLNQ5/Uq5KcImydXyXBDq7XcarrVzxK0gv+YSzk=
+
+Name: libnewt.so
+SHA-256-Digest: vimKgg2xwqHaNuimVRPsFuqTOgnc9ecopAdH3MiPwWA=
+
+Name: libnativewindow_x11.so
+SHA-256-Digest: kH+gx1y3xBN7/2zBaw5d9rD/nelrFWLvSdnjPVpR0ew=
+
+Name: libnativewindow_awt.so
+SHA-256-Digest: IcVs7hurWuzM8AKeAcci138YiFOyZE9JKLxEHL6CgHA=
+

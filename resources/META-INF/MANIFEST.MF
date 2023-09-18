@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Main-Class: com.insilico.application.insilicotools.inSilicoTools
+Class-Path: gluegen-rt-mac_1.7.0.4.jar jymol-win-x64_1.7.0.4.jar jymol-w
+ in-x86_1.7.0.4.jar jymol-mac_1.7.0.4.jar jogl-linux-x64_1.7.0.4.jar jog
+ l_1.7.0.4.jar jymol_1.7.0.4.jar jogl-linux-x86_1.7.0.4.jar gluegen_1.7.
+ 0.4.jar gluegen-rt-win-x86_1.7.0.4.jar gluegen-rt-win-x64_1.7.0.4.jar g
+ luegen-rt-linux-x64_1.7.0.4.jar jogl-win-x86_1.7.0.4.jar jogl-win-x64_1
+ .7.0.4.jar jymol-linux-x64_1.7.0.4.jar jogl-mac_1.7.0.4.jar jymol-linux
+ -x86_1.7.0.4.jar gluegen-rt_1.7.0.4.jar gluegen-rt-linux-x86_1.7.0.4.ja
+ r oejava-2017.Feb.1-Windows-x64.jar javastat_2012-01-30-142404.jar poi-
+ 3.12-20150511.jar tween-engine-api.jar glazedlists_java16-1.10.0.jar fr
+ eehep-io-2.2.2.jar jama.jar freehep-graphicsio-emf-2.2.1.jar guava-18.0
+ .jar itextpdf-5.3.4.jar swingx-all-1.6.4.jar ehcache-3.5.2.jar itext-2.
+ 1.7.jar freehep-graphics2d-2.2.1.jar slideing-layout.jar json-simple-1.
+ 1.1.jar logback-core-1.2.3.jar jfreechart-1.0.19.jar commons-codec-1.9.
+ jar oejava-2017.Feb.1-Windows-x86.jar jgoodies-common-1.7.0.jar org.RDK
+ it.jar ws-commons-util-1.0.2.jar log4j-1.2.17.jar aloe-1.0.jar RDkit-ma
+ cos-X64_2019.1.jar freehep-graphicsio-pdf-2.2.1.jar serializer.jar slf4
+ j-api-1.7.21.jar resolver.jar oejava-2017.Feb.1-Linux-x64.jar xmlrpc-cl
+ ient-3.1.3.jar oejava-2017.Feb.1-MacOSX-x64.jar RDkit-linux-X64_2019.1.
+ jar org.RDKitDoc.jar freehep-graphicsbase-2.2.1.jar freehep-graphicsio-
+ 2.2.1.jar junit-4.12.jar RDkit-win-X64_2019.1.jar jgoodies-looks-2.5.3.
+ jar jcommon-1.0.23.jar jgoodies-forms-1.7.2.jar chart-1.0.jar xercesImp
+ l.jar cjwizard_1.0.jar xml-apis.jar jide-oss-3.6.10.jar weka_3.6.12.jar
+  jlfgr-1.0.jar batik_1.6.jar logback-classic-1.2.3.jar jchem_17.2.27.0.
+ jar commons-logging-1.1.3.jar vecmath_1.5.2.jar freehep-graphicsio-ps-2
+ .2.1.jar ojdbc6.jar xmlrpc-common-3.1.3.jar automaton-1.11-8.jar xerces
+ Samples.jar postgresql-42.6.0.jar
+

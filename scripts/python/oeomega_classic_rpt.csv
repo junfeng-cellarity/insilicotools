@@ -1,0 +1,2 @@
+Molecule,SMILES,Rotors,Conformers,ElapsedTime(s),Status
+"V320053",C[C@H]1CC[C@H](CN1C(=O)C=C)c2nc3cnc4c(c3n2C)cc[nH]4,3,4,0.46
