@@ -223,6 +223,16 @@ public class ChemFunc {
         return null;
     }
 
+    public static String minimize_mol_constrained(String molStr, String idListStr) throws MalformedURLException, XmlRpcException {
+        Object[] args = new Object[]{molStr,idListStr};
+        Object molStrMin = getDockingClient().execute("minimize_structure_fixed", args);
+        if(molStrMin!=null&&!((String)molStrMin).isEmpty()){
+            return (String)molStrMin;
+        }
+        return null;
+    }
+
+/*
     public static String szybki_mol(String molStr) throws MalformedURLException, XmlRpcException {
         Object[] args = new Object[]{molStr};
         Object molStrMin = getDockingClient().execute("szybki", args);
@@ -240,7 +250,7 @@ public class ChemFunc {
         }
         return null;
     }
-
+*/
     public static String getEvotecInventoryInfo(double cutoff) throws MalformedURLException,XmlRpcException{
         String result = (String)getADMEClient().execute("check_evotec_inventory", new Object[]{new Double(cutoff).toString()});
         return result;

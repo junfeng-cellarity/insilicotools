@@ -831,7 +831,7 @@ public class OEChemFunc {
 		String molStr = getStringFromOEMol(molecule);
 		if(fixList==null||fixList.isEmpty()){
 			try {
-				OEGraphMol mol = convertString2OEMol(ChemFunc.szybki_mol(molStr),OEFormat.SDF);
+				OEGraphMol mol = convertString2OEMol(ChemFunc.minimize_mol(molStr),OEFormat.SDF);
 				oechem.OECopySDData(mol,molecule);
 				return mol;
 			} catch (MalformedURLException e) {
@@ -848,7 +848,7 @@ public class OEChemFunc {
 				}
 			}
 			try {
-				OEGraphMol mol = convertString2OEMol(ChemFunc.szybki_mol_constrained(molStr,sb.toString()),OEFormat.SDF);
+				OEGraphMol mol = convertString2OEMol(ChemFunc.minimize_mol_constrained(molStr,sb.toString()),OEFormat.SDF);
 				return mol;
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
