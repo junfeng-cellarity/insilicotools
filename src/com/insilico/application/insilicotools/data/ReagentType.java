@@ -4,7 +4,9 @@ package com.insilico.application.insilicotools.data;
  * Created by jfeng1 on 8/3/16.
  */
 public class ReagentType {
-
+    public static final String PRIMARY_ALKYL_AMINE = "[#6]-[#7;X3;H2;!$(NC=O);!$(Nc)]";
+    public static final String SECONDARY_ALKYL_AMINE = "[#6]-[#7;X3;H1;!$(NC=O);!$(Nc)]";
+    public static final String PRIMARY_SECONDARY_ALKYL_AMINE = "[#6]-[#7;X3;H2,H1;!$(NC=O);!$(Nc)]";
     public static final String PRIMARY_AMINE = "[#6]-[#7;X3;H2;!$(NC=O)]";
     public static final String SECONDARY_AMINE = "[#6]-[#7;X3;H1;!$(NC=O)]";
     public static final String PRIMARY_SECONDARY_AMINE = "[#6]-[#7;X3;H2,H1;!$(NC=O)]";

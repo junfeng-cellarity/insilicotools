@@ -753,8 +753,11 @@ public class EnumerationWizard extends JPanel {
             p.add(unmapBtn);
 
             final LinkedHashMap<String,String> reagentsMap = new LinkedHashMap<String, String>();
+            reagentsMap.put("Primary Alkyl Amine", ReagentType.PRIMARY_ALKYL_AMINE);
             reagentsMap.put("Primary Amine", ReagentType.PRIMARY_AMINE);
+            reagentsMap.put("Secondary Alkyl Amine",ReagentType.SECONDARY_ALKYL_AMINE);
             reagentsMap.put("Secondary Amine",ReagentType.SECONDARY_AMINE);
+            reagentsMap.put("Primary/Secondary Alkyl Amine",ReagentType.PRIMARY_SECONDARY_ALKYL_AMINE);
             reagentsMap.put("Primary/Secondary Amine",ReagentType.PRIMARY_SECONDARY_AMINE);
             reagentsMap.put("Aldehyde",ReagentType.ALDEHYDE);
             reagentsMap.put("Carboxylic Acid",ReagentType.CARBOXYLIC_ACID);
