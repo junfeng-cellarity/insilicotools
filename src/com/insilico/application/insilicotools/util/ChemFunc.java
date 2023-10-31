@@ -5,6 +5,7 @@ import chemaxon.calculations.pka.PKaTrainingUtil;
 import chemaxon.formats.MolExporter;
 import chemaxon.formats.MolFormatException;
 import chemaxon.formats.MolImporter;
+import chemaxon.jep.function.In;
 import chemaxon.marvin.calculations.LogPMethod;
 import chemaxon.marvin.calculations.logDPlugin;
 import chemaxon.marvin.calculations.logPPlugin;
@@ -407,31 +408,80 @@ public class ChemFunc {
         }
     }
 
-    public static Vector<PropertyMolecule> batch_overlay(OEGraphMol reference, Vector<PropertyMolecule> target_mols, double e_window, double rmsd, String method, ProgressReporter progressReporter){
+    public static Vector<PropertyMolecule> rigid_overlay(OEGraphMol reference, Vector<PropertyMolecule> target_mols, ProgressReporter progressReporter){
         Vector<PropertyMolecule> propertyMolecules = new Vector<>();
-        Object[] args = new Object[]{OEChemFunc.getInstance().getStringFromOEMol(reference),ChemFunc.convertMolVectorToSDFStringForOverlay(target_mols, false,progressReporter),e_window,rmsd};
+        Object[] args = new Object[]{OEChemFunc.getInstance().getStringFromOEMol(reference),ChemFunc.convertMolVectorToSDFStringForOverlay(target_mols, false,progressReporter)};
         try {
             if(progressReporter!=null){
-                progressReporter.reportProgress("Running Overlaying ...",DesignProgressMonitor.INDETERMINATE);
+                progressReporter.reportProgress("Running Rigid Body Overlaying ...",DesignProgressMonitor.INDETERMINATE);
             }
-            String resultStr = (String)getDockingClient().execute(method,args);
+            String resultStr = (String)getDockingClient().execute("shape_screen_rigid",args);
             oemolistream ifs = new oemolistream();
             ifs.SetFormat(OEFormat.SDF);
             ifs.openstring(resultStr);
             OEGraphMol mol = new OEGraphMol();
             NumberFormat nf = new DecimalFormat("#.##");
             while(oechem.OEReadMolecule(ifs,mol)){
+                PropertyMolecule propertyMolecule = new PropertyMolecule(mol);
+                int moka_id = Integer.parseInt(oechem.OEGetSDData(mol,"moka_id"));
+                double overlayScore = Double.parseDouble(oechem.OEGetSDData(mol,"r_phase_Shape_Sim"));
+                propertyMolecule.addProperty("Overlay Score", nf.format(overlayScore));
+                propertyMolecules.add(propertyMolecule);
+            }
+        } catch (XmlRpcException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        return propertyMolecules;
+    }
+
+    public static Vector<PropertyMolecule> batch_overlay(OEGraphMol reference, Vector<PropertyMolecule> target_mols, double e_window, double rmsd, int nSolutions, ProgressReporter progressReporter){
+        Vector<PropertyMolecule> propertyMolecules = new Vector<>();
+        Object[] args = new Object[]{OEChemFunc.getInstance().getStringFromOEMol(reference),ChemFunc.convertMolVectorToSDFStringForOverlay(target_mols, false,progressReporter),e_window, rmsd};
+        try {
+            if(progressReporter!=null){
+                progressReporter.reportProgress("Running Overlaying ...",DesignProgressMonitor.INDETERMINATE);
+            }
+            String resultStr = (String)getDockingClient().execute("shape_screen_flex",args);
+            oemolistream ifs = new oemolistream();
+            ifs.SetFormat(OEFormat.SDF);
+            ifs.openstring(resultStr);
+            OEGraphMol mol = new OEGraphMol();
+            NumberFormat nf = new DecimalFormat("#.##");
+            HashMap<Integer,Vector<PropertyMolecule>> resultMap = new HashMap<>();
+            while(oechem.OEReadMolecule(ifs,mol)){
                     PropertyMolecule propertyMolecule = new PropertyMolecule(mol);
-                    double strainEnergy = Double.parseDouble(oechem.OEGetSDData(mol,"deltaEnergy"));
-                    double overlayScore;
-                    if(method.equals("oe_rocs")) {
-                        overlayScore = Double.parseDouble(oechem.OEGetSDData(mol, "ROCS_TanimotoCombo"));
-                    }else{
-                        overlayScore = Double.parseDouble(oechem.OEGetSDData(mol,"EON_ET_combo"));
-                    }
+                    int moka_id = Integer.parseInt(oechem.OEGetSDData(mol,"moka_id"));
+                    double strainEnergy = Double.parseDouble(oechem.OEGetSDData(mol,"r_mmod_Relative_Potential_Energy-S-OPLS"))/4.17;
+                    double overlayScore = Double.parseDouble(oechem.OEGetSDData(mol,"r_phase_Shape_Sim"));
                     propertyMolecule.addProperty("Strain Energy", nf.format(strainEnergy));
                     propertyMolecule.addProperty("Overlay Score", nf.format(overlayScore));
-                    propertyMolecules.add(propertyMolecule);
+                    if(strainEnergy <= e_window) {
+                        if (!resultMap.containsKey(new Integer(moka_id))) {
+                            resultMap.put(moka_id, new Vector<>());
+                        }
+                        resultMap.get(new Integer(moka_id)).add(propertyMolecule);
+                    }
+                    //propertyMolecules.add(propertyMolecule);
+            }
+            for(Integer key:resultMap.keySet()){
+                Collections.sort(resultMap.get(key), new Comparator<PropertyMolecule>() {
+                    @Override
+                    public int compare(PropertyMolecule o1, PropertyMolecule o2) {
+                        double score1 = o1.getProperty("Overlay Score").getValue();
+                        double score2 = o2.getProperty("Overlay Score").getValue();
+                        return new Double(score2).compareTo(score1);
+                    }
+                });
+                int i = 0;
+                for(PropertyMolecule m : resultMap.get(key)){
+                    if(i<nSolutions){
+                        propertyMolecules.add(m);
+                    }
+                    i++;
+                }
             }
         } catch (XmlRpcException e) {
             e.printStackTrace();
@@ -790,13 +840,13 @@ public class ChemFunc {
                 progressReporter.reportProgress("Generating starting conformation ...",100*idx/size);
             }
 
-            OEGraphMol mol2d = mol.getMol();
-            if(mol2d==null||mol2d.NumAtoms()==0){
+            OEGraphMol mol3d = mol.getMol3d();
+            if(mol3d==null||mol3d.NumAtoms()==0){
                 System.err.println("Failed to generate conformer for "+mol.getSmiles());
                 idx++;
                 continue;
             }
-            OEGraphMol oemol = new OEGraphMol(mol2d);
+            OEGraphMol oemol = new OEGraphMol(mol3d);
             if (protonation) {
                 Protonator.getInstance().protonate(oemol);
             } else {

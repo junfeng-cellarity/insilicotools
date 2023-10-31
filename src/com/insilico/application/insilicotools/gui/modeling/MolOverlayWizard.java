@@ -240,12 +240,12 @@ public class MolOverlayWizard extends MolWizard {
             p.add(molViewer3D_2);
             p.add(tablePanel);
             JPanel btnPanel = new JPanel();
-            final JCheckBox batchCb = new JCheckBox("Batch",false);
-            final JComboBox methodCb = new JComboBox(new String[]{"ROCS","EON"});
+            //final JCheckBox batchCb = new JCheckBox("Batch",false);
+            //final JComboBox methodCb = new JComboBox(new String[]{"ROCS","EON"});
             final JButton optionBtn = new JButton("ConfGen Options");
             final JComboBox nSolutionCB = new JComboBox(new Integer[]{1,2,3,4,5,6,7,8,9,10});
-            HashMap<String,String> methodHash = new HashMap<String,String>(){{put("ROCS","oe_rocs");put("EON","oe_eon");}};
-            methodCb.setEnabled(false);
+            //HashMap<String,String> methodHash = new HashMap<String,String>(){{put("ROCS","oe_rocs");put("EON","oe_eon");}};
+            //methodCb.setEnabled(false);
             //btnPanel.add(batchCb);
             //btnPanel.add(methodCb);
             final JCheckBox rigidCb = new JCheckBox("Rigid Overlay?",false);
@@ -253,20 +253,20 @@ public class MolOverlayWizard extends MolWizard {
                 @Override
                 public void actionPerformed(ActionEvent actionEvent) {
                     if(rigidCb.isSelected()) {
-                        batchCb.setEnabled(false);
-                        methodCb.setEnabled(false);
+//                        batchCb.setEnabled(false);
+//                        methodCb.setEnabled(false);
                         optionBtn.setEnabled(false);
                         nSolutionCB.setEnabled(false);
                     }else{
-                        batchCb.setEnabled(true);
-                        methodCb.setEnabled(true);
+//                        batchCb.setEnabled(true);
+//                        methodCb.setEnabled(true);
                         optionBtn.setEnabled(true);
                         nSolutionCB.setEnabled(true);
                     }
                 }
             });
             btnPanel.add(rigidCb);
-            final JCheckBox shapeOnlyCb = new JCheckBox("Shape Only?",false);
+            //final JCheckBox shapeOnlyCb = new JCheckBox("Shape Only?",false);
             //btnPanel.add(shapeOnlyCb);
             btnPanel.add(new JLabel("No. Solution:"));
             btnPanel.add(nSolutionCB);
@@ -277,6 +277,7 @@ public class MolOverlayWizard extends MolWizard {
                 }
             });
             btnPanel.add(optionBtn);
+            /*
             batchCb.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent actionEvent) {
@@ -291,6 +292,7 @@ public class MolOverlayWizard extends MolWizard {
                     }
                 }
             });
+            */
             JXButton superimposeBtn = new JXButton("Superimpose");
             superimposeBtn.setBackgroundPainter(new RectanglePainter(Color.GREEN,Color.BLACK));
 
@@ -309,27 +311,38 @@ public class MolOverlayWizard extends MolWizard {
                             Vector<PropertyMolecule> results = new Vector<PropertyMolecule>();
                             results.add(new PropertyMolecule(refLigand));
                             if(rigidCb.isSelected()){
-                                for(PropertyMolecule candidate:candidates) {
-                                    OEGraphMol result = OEChemFunc.getInstance().colorOverlapRigid2Rigid(refLigand,candidate.getMol3d(),shapeOnlyCb.isSelected());
-                                    candidate.setConf3d(result);
-                                    if(oechem.OEHasSDData(result,"Shape/Feature Score")) {
-                                        candidate.addProperty("Overlay Score", nf.format(Double.parseDouble(oechem.OEGetSDData(result, "Shape/Feature Score"))));
+                                results.addAll(ChemFunc.rigid_overlay(refLigand, candidates, new ProgressReporter() {
+                                    @Override
+                                    public void reportProgress(String note, int progress) {
+                                        Vector v = new Vector();
+                                        v.add(note);
+                                        v.add(progress);
+                                        publish(v);
                                     }
-                                    if(oechem.OEHasSDData(result,"Energy")) {
-                                        candidate.addProperty("Strain Energy", nf.format(Double.parseDouble(oechem.OEGetSDData(result, "Energy"))));
-                                    }
-                                    results.add(candidate);
-                                }
-                            }else if(batchCb.isSelected()){
-                                final String method = methodHash.get((String)methodCb.getSelectedItem());
+                                }));
+
+//                                for(PropertyMolecule candidate:candidates) {
+//                                    OEGraphMol result = OEChemFunc.getInstance().colorOverlapRigid2Rigid(refLigand,candidate.getMol3d(),shapeOnlyCb.isSelected());
+//                                    candidate.setConf3d(result);
+//                                    if(oechem.OEHasSDData(result,"Shape/Feature Score")) {
+//                                        candidate.addProperty("Overlay Score", nf.format(Double.parseDouble(oechem.OEGetSDData(result, "Shape/Feature Score"))));
+//                                    }
+//                                    if(oechem.OEHasSDData(result,"Energy")) {
+//                                        candidate.addProperty("Strain Energy", nf.format(Double.parseDouble(oechem.OEGetSDData(result, "Energy"))));
+//                                    }
+//                                    results.add(candidate);
+//                                }
+                            }else /*if(batchCb.isSelected())*/{
+                                //final String method = methodHash.get((String)methodCb.getSelectedItem());
                                 HashMap<String, Number> optionMap = defaultOptions;
                                 if(optionsDialog.isCommitted()){
                                     optionMap = optionsDialog.getResultMap();
                                 }
                                 final double rmsd = optionMap.get("RMSD").doubleValue();
                                 final double ewindow = optionMap.get("Energy Window (kcal)").doubleValue();
+                                final int nSolutions = (int) nSolutionCB.getSelectedItem();
 
-                                results.addAll(ChemFunc.batch_overlay(refLigand, candidates, ewindow, rmsd, method, new ProgressReporter() {
+                                results.addAll(ChemFunc.batch_overlay(refLigand, candidates, ewindow, rmsd, nSolutions, new ProgressReporter() {
                                     @Override
                                     public void reportProgress(String note, int progress) {
                                         Vector v = new Vector();
@@ -339,6 +352,7 @@ public class MolOverlayWizard extends MolWizard {
                                     }
                                 }));
                             }
+                            /*
                             else {
                                 int nSolutions = (Integer) nSolutionCB.getSelectedItem();
                                 HashMap<String, Number> optionMap = defaultOptions;
@@ -383,6 +397,7 @@ public class MolOverlayWizard extends MolWizard {
                                     }
                                 }
                             }
+                             */
                             return results;
                         }
 
