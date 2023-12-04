@@ -107,11 +107,11 @@ class MoKaPredictor:
 
                 batch_size = 1
                 structure_column = vtable.findColumnWithName(structureCol,0)
-                basic_pka_column = vtable.findColumnWithName("basic pka", Column.COLUMN_DOUBLE)
-                acidic_pka_column = vtable.findColumnWithName("acidic pka",Column.COLUMN_DOUBLE)
-                logd74_column = vtable.findColumnWithName("logD74", Column.COLUMN_DOUBLE)
-                logsol_column = vtable.findColumnWithName("Log Solubility", Column.COLUMN_DOUBLE)
-                molsol_column = vtable.findColumnWithName("Solubility (mole/l)", Column.COLUMN_DOUBLE)
+                basic_pka_column = vtable.findColumnWithName("basic pka", vortex.DOUBLE, 1)
+                acidic_pka_column = vtable.findColumnWithName("acidic pka",vortex.DOUBLE, 1)
+                logd74_column = vtable.findColumnWithName("logD74", vortex.DOUBLE, 1)
+                logsol_column = vtable.findColumnWithName("Log Solubility", vortex.DOUBLE, 1)
+                molsol_column = vtable.findColumnWithName("Solubility (mole/l)", vortex.DOUBLE, 1)
                 smilesDict = {}
                 for row in rows:
                     if self.progressMonitor.isCanceled():

@@ -72,15 +72,18 @@ class hERGPredictor:
                 self.progressMonitor.setMillisToDecideToPopup(0)
                 self.progressMonitor.setMillisToPopup(0)
 
-            def calculate_hERG(self, smiles):
+            def calculate_hERG(self, smilesDict):
                 conn = httplib.HTTPConnection("herg.cellarity.int", port=80)
                 headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
                 parser = JSONParser()
-                dict = JSONObject()
                 smilesList = JSONArray()
-                smilesList.add(smiles)
-                dict.put("smiles",smilesList)
-                conn.request("POST","/predict",dict.toJSONString(),headers)
+                for key in smilesDict.keys():
+                    smilesEntry = JSONObject()
+                    smilesEntry.put("id",key)
+                    smilesEntry.put("smiles",smilesDict[key])
+                    smilesList.add(smilesEntry)
+
+                conn.request("POST","/predict",smilesList.toJSONString(),headers)
                 response = conn.getresponse()
                 if response.status == 200:
                     data = response.read()
@@ -101,9 +104,11 @@ class hERGPredictor:
                         rows.append(tmp.get(i))
 
                 first = True
+                batch_size = 1
                 structure_column = vtable.findColumnWithName(structureCol,0)
-                hERG_column = vtable.findColumnWithName("Cellarity_hERG_IC50(uM)", Column.COLUMN_DOUBLE)
-                hERG_confidence_column = vtable.findColumnWithName("hERG_confidence",Column.COLUMN_DOUBLE)
+                hERG_column = vtable.findColumnWithName("Cellarity_hERG_IC50(uM)", vortex.DOUBLE, 1)
+                hERG_confidence_column = vtable.findColumnWithName("hERG_confidence",vortex.DOUBLE, 1)
+                smilesDict = {}
                 for row in rows:
                     if self.progressMonitor.isCanceled():
                         break
@@ -123,10 +128,19 @@ class hERGPredictor:
                            smiles = None
 
                     if smiles is not None:
-                        result_dict = self.calculate_hERG(smiles)
+                        if "\\" in smiles:
+                            smiles = smiles.replace("\\", "")
+                        smilesDict[row] = smiles
+
+                    if len(smilesDict) % batch_size == 0 or row == nrow - 1:
+                        result_dict = self.calculate_hERG(smilesDict)
+                        smilesDict.clear()
                         if len(result_dict)>0:
-                            hERG_column.setValueFromString(row,"%5.2f"%result_dict["Cellarity_hERG_IC50(uM)"][0])
-                            hERG_confidence_column.setValueFromString(row,"%5.2f"%result_dict["hERG_confidence"][0])
+                            for key in result_dict.keySet():
+                                rowIdx = int(key)
+                                result_dict = result_dict[key]
+                                hERG_column.setValueFromString(rowIdx,"%5.2f"%result_dict["Cellarity_hERG_IC50(uM)"])
+                                hERG_confidence_column.setValueFromString(rowIdx,"%5.2f"%result_dict["hERG_confidence"])
 
                     if first:
                         first = False

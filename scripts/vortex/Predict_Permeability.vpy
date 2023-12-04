@@ -115,7 +115,7 @@ class PermPredictor:
                 # }
                 batch_size = 1
                 structure_column = vtable.findColumnWithName(structureCol,0)
-                perm_column = vtable.findColumnWithName("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)", Column.COLUMN_DOUBLE)
+                perm_column = vtable.findColumnWithName("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)", vortex.DOUBLE, 1)
                 smilesDict = {}
                 for row in rows:
                     if self.progressMonitor.isCanceled():
