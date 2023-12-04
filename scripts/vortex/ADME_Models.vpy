@@ -99,12 +99,13 @@ class ADMERunner:
             "ChemAxon Acidic pKa":vortex.DOUBLE,
             "Cellarity_hERG_IC50(uM)":vortex.DOUBLE,
             "Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)":vortex.DOUBLE,
-            "hepatocyte stability":vortex.STRING
+            "hepatocyte stability":vortex.STRING,
+            "blood stability": vortex.DOUBLE
         }
         self.properties = ["ALogD","MoKa LogP","MoKa LogD", "MoKa Basic pKa", "MoKa Acidic pKa",
                            "ChemAxon LogP", "ChemAxon LogD", "ChemAxon Basic pKa", "ChemAxon Acidic pKa",
                            "Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)",
-                           "Cellarity_hERG_IC50(uM)", "hepatocyte stability"
+                           "Cellarity_hERG_IC50(uM)", "hepatocyte stability", "blood stability"
                            ]
         self.xmlrpc_client = XmlRpcClient()
         self.xmlrpc_config = XmlRpcClientConfigImpl()
@@ -220,6 +221,28 @@ class ADMERunner:
 
     def calculate_HepatocyteStability(self, smilesDict):
         conn = httplib.HTTPConnection("hepa.cellarity.int", port=80)
+        headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
+        parser = JSONParser()
+
+        smilesList = JSONArray()
+        for key in smilesDict.keys():
+            smilesEntry = JSONObject()
+            smilesEntry.put("id", key)
+            smilesEntry.put("smiles", smilesDict[key])
+            smilesList.add(smilesEntry)
+        conn.request("POST", "/predict", smilesList.toJSONString(), headers)
+        response = conn.getresponse()
+        if response.status == 200:
+            data = response.read()
+            result_dict = parser.parse(data)
+            return result_dict
+        else:
+            print(response.msg)
+            print("Something wrong.")
+        return {}
+
+    def calculate_BloodStability(self, smilesDict):
+        conn = httplib.HTTPConnection("bloodstability.cellarity.int", port=80)
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
         parser = JSONParser()
 
@@ -398,19 +421,20 @@ class ADMERunner:
                                     perm = result_dict['0']['Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)']
                                     propertyDict['Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)'] = perm
 
-                        if property == "hepatocyte stability":
-                            if property not in propertyDict:
-                                result_dict = this.calculate_HepatocyteStability(smilesDict)
-                                if len(result_dict) > 0:
-                                   hep_stab = result_dict['0']['predicted_label']
-                                   propertyDict[property] = hep_stab
-
                         if property == "Cellarity_hERG_IC50(uM)":
                             if property not in propertyDict:
                                 result_dict = this.calculate_hERG(smilesDict)
                                 if len(result_dict) > 0:
                                     hERG = result_dict['0']['Cellarity_hERG_IC50(uM)']
                                     propertyDict['Cellarity_hERG_IC50(uM)'] = hERG
+
+                        if property == "blood stability":
+                            if property not in propertyDict:
+                                result_dict = this.calculate_BloodStability(smilesDict)
+                                if len(result_dict) > 0:
+                                    blood_stab = result_dict['0']['probability_stable']
+                                    propertyDict[property] = blood_stab
+
 
                         if property in propertyDict:
                             try:
