@@ -154,8 +154,8 @@ public class inSilicoTools extends JFrame{
                 try {
 //                    OEChemWebLicenseInstaller.loadOELicenseFromWeb();
                     oechem.OEAddLicenseFromHttp(new URL("http://10.74.2.128:8080/insilico_tools/oe_license.txt"));
-                    LicenseManager.setLicenseFile("/home/jfeng/.chemaxon/license.cxl");
-//                   LicenseManager.setLicenseFile("http://10.74.2.128:8080/insilico_tools/license.cxl");
+//                    LicenseManager.setLicenseFile("/home/jfeng/.chemaxon/license.cxl");
+                    LicenseManager.setLicenseFile("http://10.74.2.128:8080/insilico_tools/license.cxl");
 //                    LicenseHandler.getInstance().checkLicense("Marvin Applets");
                     LicenseHandler.getInstance().checkLicense("Marvin Beans");
 //                    LicenseHandler.getInstance().checkLicense("JChem Base");
