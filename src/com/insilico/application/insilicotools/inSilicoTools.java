@@ -157,7 +157,7 @@ public class inSilicoTools extends JFrame{
 //                    LicenseManager.setLicenseFile("/home/jfeng/.chemaxon/license.cxl");
                     LicenseManager.setLicenseFile("http://10.74.2.128:8080/insilico_tools/license.cxl");
 //                    LicenseHandler.getInstance().checkLicense("Marvin Applets");
-                    LicenseHandler.getInstance().checkLicense("Marvin Beans");
+//                    LicenseHandler.getInstance().checkLicense("Marvin Beans");
 //                    LicenseHandler.getInstance().checkLicense("JChem Base");
 //                    LicenseHandler.getInstance().checkLicense("Protonation Plugin Group");
                 } catch (IOException e) {

@@ -1024,11 +1024,11 @@ public class ChemFunc {
 
     static final HashMap<String, double[]> ruleDict = new HashMap<String, double[]>() {
         {
-            put("MoKa LogP", new double[]{3,5});
+            put("ChemAxon LogP", new double[]{3,5});
             put("2d PSA", new double[]{20, 40, 90, 120});
-            put("MoKa Basic pKa",new double[]{8,10});
+            put("ChemAxon Basic pKa",new double[]{8,10});
             put("hydrogen-bond donors", new double[]{0.5, 3.5});
-            put("MoKa LogD", new double[]{2,4});
+            put("ChemAxon LogD", new double[]{2,4});
             put("molecular weight", new double[]{360, 500});
         }
     };
