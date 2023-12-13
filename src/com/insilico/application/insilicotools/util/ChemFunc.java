@@ -1001,21 +1001,21 @@ public class ChemFunc {
             return null;
         }
         String rawCYNumber2 = rawCYNumber.trim().toUpperCase();
-        if(rawCYNumber2.length()>11){
+        if(rawCYNumber2.length()>10){
             return null;
         }
         if(rawCYNumber2.matches("CY-\\d+")){
-            if(rawCYNumber2.length()==11) {
+            if(rawCYNumber2.length()==10) {
                 return rawCYNumber2;
             }else{
                 String tmp = rawCYNumber2.replaceAll("CY-","");
-                if(tmp.matches("\\d+")&&tmp.length()<=7){
+                if(tmp.matches("\\d+")&&tmp.length()<=6){
                     String rawNumber3 = String.format("CY-2%06d",Integer.parseInt(tmp));
                     return rawNumber3;
                 }
             }
         }
-        if(rawCYNumber2.matches("\\d+")&&rawCYNumber2.length()<=7){
+        if(rawCYNumber2.matches("\\d+")&&rawCYNumber2.length()<=6){
             String rawNumber3 = String.format("CY-2%06d",Integer.parseInt(rawCYNumber2));
             return rawNumber3;
         }
@@ -2513,7 +2513,7 @@ public class ChemFunc {
     }
 
     private static void test_formatCY() {
-        String a = "CY-0009775\n" +
+        String a = "CY-2009775\n" +
                 "CY-0000121\n" +
                 "CY-0000076\n" +
                 "CY-0009459\n" +
@@ -2604,7 +2604,7 @@ public class ChemFunc {
                 "CY-10479\n" +
                 "CY-10249\n" +
                 "CY-10059\n" +
-                "CY-51\n";
+                "51\n";
         String[] list = a.split("\n");
         for(String tmp:list) {
             System.out.println(formatCYNumber(tmp));
