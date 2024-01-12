@@ -34,7 +34,7 @@ public class inSilicoTools extends JFrame{
 //    static { System.setProperty("logback.configurationFile", "http://10.74.2.128:8080/insilico/logback.xml");}
     static inSilicoTools _this;
     public inSilicoTools() throws HeadlessException {
-        super(new String("InSilico Tools"));
+        super(new String("MedChem DesignTool"));
     }
 
     public static inSilicoTools getInstance(){
