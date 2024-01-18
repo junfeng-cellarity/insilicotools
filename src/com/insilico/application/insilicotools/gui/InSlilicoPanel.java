@@ -939,6 +939,16 @@ public class InSlilicoPanel extends JPanel {
                                         mol.addStructureAlerts(alerts);
                                     }
                                 }
+
+                                //todo:
+                                //todo: add new ADME models from ML group
+                                //todo:
+                                for(String model:ChemFunc.adme_models){
+                                    if(selectedProperties.contains(model)){
+                                        ChemFunc.runMLModels(molecules,model);
+                                    }
+                                }
+
                                 if(selectedProperties.contains("hERG inhibition")){
                                     ChemFunc.generateHERG(molecules);
                                 }

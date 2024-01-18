@@ -48,7 +48,7 @@ import org.apache.commons.codec.binary.Base64;
 import javax.vecmath.Matrix3d;
 import javastat.util.DataManager;
 import org.RDKit.RDKFuncs;
-
+import java.net.HttpURLConnection;
 /**
  * Created by jfeng1 on 9/9/15.
  */
@@ -65,6 +65,8 @@ public class ChemFunc {
     public static final String DOCKING_MODE_SP = "SP";
     public static final String DOCKING_MODE_XP = "XP";
     public static final HashMap<String,String> PROPERTY_DETAILS;
+    public static HashMap<String,String> ADME_URLS;
+    public static HashMap<String,String> ADME_KEYPROP;
     static{
         PROPERTY_DETAILS = new HashMap<String, String>();
         PROPERTY_DETAILS.put("CLogP","LogP calculated by RDKit");
@@ -84,6 +86,19 @@ public class ChemFunc {
         PROPERTY_DETAILS.put("HOMO","Energy of highest occupied molecular orbital");
         PROPERTY_DETAILS.put("LUMO","Energy of lowest unoccupied molecular orbital");
         PROPERTY_DETAILS.put("HBS","Intrinsic hydrogen bond");
+
+        ADME_URLS = new HashMap<>();
+        ADME_URLS.put("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)","http://perm.cellarity.int/predict");
+        ADME_URLS.put("Cellarity_hERG_IC50(uM)","http://herg.cellarity.int/predict");
+        ADME_URLS.put("hepatocyte stability","http://hepa.cellarity.int/predict");
+        ADME_URLS.put("blood stability","http://bloodstability.cellarity.int/predict");
+
+        ADME_KEYPROP = new HashMap<>();
+        ADME_KEYPROP.put("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)","Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)");
+        ADME_KEYPROP.put("Cellarity_hERG_IC50(uM)","Cellarity_hERG_IC50(uM)");
+        ADME_KEYPROP.put("hepatocyte stability","predicted_label");
+        ADME_KEYPROP.put("blood stability","probability_stable");
+
     }
 
     public static final String[] properties = {
@@ -93,16 +108,21 @@ public class ChemFunc {
                                                 "MoKa LogD",
                                                 "MoKa pKa",
                                                 "ChemAxon pKa",
-                                                "ChemAxon LogD"
+                                                "ChemAxon LogD",
+                                                "CNS MPO"
 
                                                 //"HOMO","LUMO","HBS"
                                               };
 
     public static final String[] adme_models = {
-                                                "CNS MPO",
-                                                "hERG",
-                                                "Papp A->B",
-                                                "General Metabolic Stability: T1/2 (min) (Mouse)"
+
+            "Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)",
+            "Cellarity_hERG_IC50(uM)",
+            "hepatocyte stability",
+            "blood stability"
+//                                                "hERG",
+//                                                "Papp A->B",
+//                                                "General Metabolic Stability: T1/2 (min) (Mouse)"
                                               };
 
     public static final String[] safety_models = {
@@ -1511,6 +1531,110 @@ public class ChemFunc {
         }
     }
 
+    //todo:
+    //todo:New ADME models by ML group@Cellarity
+    //todo:
+    //
+    //
+//    def calculate_hERG(self, smilesDict):
+//    conn = httplib.HTTPConnection("herg.cellarity.int", port=80)
+//    headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
+//    parser = JSONParser()
+//
+//    smilesList = JSONArray()
+//        for key in smilesDict.keys():
+//    smilesEntry = JSONObject()
+//            smilesEntry.put("id", key)
+//            smilesEntry.put("smiles", smilesDict[key])
+//            smilesList.add(smilesEntry)
+//            conn.request("POST", "/predict", smilesList.toJSONString(), headers)
+//    response = conn.getresponse()
+//            if response.status == 200:
+//    data = response.read()
+//    result_dict = parser.parse(data)
+//            return result_dict
+    public static void runMLModels(Vector<PropertyMolecule> propertyMolecules, String modelName) throws IOException, ParseException {
+        String url = ADME_URLS.get(modelName);
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestProperty("accept","application/json");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestMethod("POST");
+        JSONParser parser = new JSONParser();
+        JSONArray smilesList = new JSONArray();
+        int index = -1;
+        for(PropertyMolecule propertyMolecule:propertyMolecules) {
+            index += 1;
+            JSONObject smilesObj = new JSONObject();
+            smilesObj.put("id", index);
+            smilesObj.put("smiles", oechem.OEMolToSmiles(propertyMolecule.getMol()));
+            smilesList.add(smilesObj);
+        }
+        String parmas = smilesList.toJSONString();
+
+        // For POST only - START
+        con.setDoOutput(true);
+        OutputStream os = con.getOutputStream();
+        os.write(parmas.getBytes());
+        os.flush();
+        os.close();
+        // For POST only - END
+
+        int responseCode = con.getResponseCode();
+        //System.out.println("POST Response Code :: " + responseCode);
+
+        if (responseCode == HttpURLConnection.HTTP_OK) { //success
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            // print result
+            JSONObject result = (JSONObject) parser.parse(response.toString());
+            for(Object key : result.keySet()){
+                int compound_id = Integer.parseInt((String) key);
+                JSONObject molResult = (JSONObject) result.get(key);
+                for(Object property: molResult.keySet()){
+                    String propertyName = (String) property;
+                    Object propertyValueObj = molResult.get(property);
+                    String propertyValue = null;
+                    System.out.println(compound_id+" "+property+"  "+propertyValueObj);
+                    if(propertyValueObj instanceof String) {
+                        propertyValue = (String) propertyValueObj;
+                    }
+                    if(propertyValueObj instanceof Long) {
+                        propertyValue = Long.toString((Long)propertyValueObj);
+                    }
+
+                    if(propertyValueObj instanceof Integer){
+                        propertyValue = Integer.toString((Integer)propertyValueObj);
+                    }
+
+                    if(propertyValueObj instanceof Float){
+                        propertyValue = Float.toString((Float)propertyValueObj);
+                    }
+
+                    if(propertyValueObj instanceof Double){
+                        propertyValue = Double.toString((Double)propertyValueObj);
+                    }
+                    if(propertyValue!=null && propertyName.equals(ADME_KEYPROP.get(modelName))) {
+                        propertyMolecules.get(compound_id).addProperty(modelName, propertyValue);
+                    }else{
+                        System.out.println(property);
+                    }
+                }
+            }
+
+        } else {
+            throw new IOException("Failed to calculate ");
+        }
+    }
+
+
     public static void generateMoKaDescriptors(Vector<PropertyMolecule> mols) throws MalformedURLException, XmlRpcException, ParseException, ConnectException {
         admeClient = getADMEClient();
 
@@ -2502,7 +2626,13 @@ public class ChemFunc {
     }
 
     public static void main(String[] args) {
-        test_formatCY();
+        try {
+            testPost();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 
     private void test_msm(){
@@ -2604,12 +2734,71 @@ public class ChemFunc {
                 "CY-10479\n" +
                 "CY-10249\n" +
                 "CY-10059\n" +
-                "51\n";
+                "4451\n";
         String[] list = a.split("\n");
         for(String tmp:list) {
             System.out.println(formatCYNumber(tmp));
         }
     }
+
+    private static void testPost() throws IOException, ParseException {
+        URL obj = new URL("http://herg.cellarity.int/predict");
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestProperty("accept","application/json");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestMethod("POST");
+        JSONParser parser = new JSONParser();
+        JSONArray smilesList = new JSONArray();
+
+        JSONObject smilesObj1 = new JSONObject();
+        smilesObj1.put("id",0);
+        smilesObj1.put("smiles","CCCCCCCCCN");
+        smilesList.add(smilesObj1);
+
+        JSONObject smilesObj2 = new JSONObject();
+        smilesObj2.put("id",1);
+        smilesObj2.put("smiles","CCCCCC(=O)O");
+        smilesList.add(smilesObj2);
+
+        String parmas = smilesList.toJSONString();
+
+        // For POST only - START
+        con.setDoOutput(true);
+        OutputStream os = con.getOutputStream();
+        os.write(parmas.getBytes());
+        os.flush();
+        os.close();
+        // For POST only - END
+
+        int responseCode = con.getResponseCode();
+        System.out.println("POST Response Code :: " + responseCode);
+
+        if (responseCode == HttpURLConnection.HTTP_OK) { //success
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            // print result
+            JSONObject result = (JSONObject) parser.parse(response.toString());
+            System.out.println(result.toString());
+            for(Object key : result.keySet()){
+                int compound_id = Integer.parseInt((String) key);
+                JSONObject molResult = (JSONObject) result.get(key);
+                for(Object propertyName: molResult.keySet()){
+                    System.out.println(propertyName);
+                    System.out.println(molResult.get(propertyName));
+                }
+            }
+        } else {
+            System.out.println("POST request did not work.");
+        }
+    }
+
 
     protected static void test_canonicalization() {
         String mol_string = "VIR-0089945\n" +
