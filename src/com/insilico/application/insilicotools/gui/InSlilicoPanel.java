@@ -913,6 +913,10 @@ public class InSlilicoPanel extends JPanel {
                                     ChemFunc.generateMoKaDescriptors(molecules);
                                 }
 
+                                if(selectedProperties.contains("ALogD")){
+                                    ChemFunc.generateAlogD(molecules);
+                                }
+
                                 if(selectedProperties.contains("CNS MPO")){
                                     ChemFunc.generateCNSMPODescriptors(molecules,false);
                                 }

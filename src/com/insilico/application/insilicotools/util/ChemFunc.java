@@ -69,6 +69,7 @@ public class ChemFunc {
     public static HashMap<String,String> ADME_KEYPROP;
     static{
         PROPERTY_DETAILS = new HashMap<String, String>();
+        PROPERTY_DETAILS.put("ALogD","LogD by Schrodinger");
         PROPERTY_DETAILS.put("CLogP","LogP calculated by RDKit");
         PROPERTY_DETAILS.put("CNS MPO","Pfizer Score (0-6) for CNS delivery, >=4 is desirable.");
         PROPERTY_DETAILS.put("CNS PET MPO","Pfizer Score (0-6) for CNS PET ligand delivery, >=3 is desirable.");
@@ -88,16 +89,25 @@ public class ChemFunc {
         PROPERTY_DETAILS.put("HBS","Intrinsic hydrogen bond");
 
         ADME_URLS = new HashMap<>();
-        ADME_URLS.put("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)","http://perm.cellarity.int/predict");
-        ADME_URLS.put("Cellarity_hERG_IC50(uM)","http://herg.cellarity.int/predict");
-        ADME_URLS.put("hepatocyte stability","http://hepa.cellarity.int/predict");
-        ADME_URLS.put("blood stability","http://bloodstability.cellarity.int/predict");
+//        Plasma Protein Binding https://ppb-service-yatai.cellarity.bentoml.ai
+//        Hepatocyte Stability https://hepstability-service-yatai.cellarity.bentoml.ai
+//        Blood Stability https://bloodstability-service-yatai.cellarity.bentoml.ai
+//        hERG https://herg-service-yatai.cellarity.bentoml.ai
+//        Permeability https://perm-public-endpoint-yatai.cellarity.bentoml.ai
+//        MoKa https://moka-test2-yatai.cellarity.bentoml.ai
+
+        ADME_URLS.put("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)","https://perm-public-endpoint-yatai.cellarity.bentoml.ai/predict");
+        ADME_URLS.put("Cellarity_hERG_IC50(uM)","https://herg-service-yatai.cellarity.bentoml.ai/predict");
+        ADME_URLS.put("hepatocyte stability","https://hepstability-service-yatai.cellarity.bentoml.ai/predict");
+        ADME_URLS.put("blood stability","https://bloodstability-service-yatai.cellarity.bentoml.ai/predict");
+        ADME_URLS.put("plasma protein unbound(human)%","https://ppb-service-yatai.cellarity.bentoml.ai/predict");
 
         ADME_KEYPROP = new HashMap<>();
         ADME_KEYPROP.put("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)","Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)");
         ADME_KEYPROP.put("Cellarity_hERG_IC50(uM)","Cellarity_hERG_IC50(uM)");
         ADME_KEYPROP.put("hepatocyte stability","predicted_label");
         ADME_KEYPROP.put("blood stability","probability_stable");
+        ADME_KEYPROP.put("plasma protein unbound(human)%","Cellarity Plasma Human Unbound");
 
     }
 
@@ -109,7 +119,8 @@ public class ChemFunc {
                                                 "MoKa pKa",
                                                 "ChemAxon pKa",
                                                 "ChemAxon LogD",
-                                                "CNS MPO"
+                                                "CNS MPO",
+                                                "ALogD"
 
                                                 //"HOMO","LUMO","HBS"
                                               };
@@ -119,7 +130,8 @@ public class ChemFunc {
             "Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)",
             "Cellarity_hERG_IC50(uM)",
             "hepatocyte stability",
-            "blood stability"
+            "blood stability",
+            "plasma protein unbound(human)%"
 //                                                "hERG",
 //                                                "Papp A->B",
 //                                                "General Metabolic Stability: T1/2 (min) (Mouse)"
@@ -899,6 +911,7 @@ public class ChemFunc {
                     oechem.OESetSDData(oemol, p, mol.getProperty(p).getProperty());
                 }
             }
+            oemol.SetTitle(String.format("%d",idx));
             oechem.OESetSDData(oemol, "moka_id", String.format("%d",idx++));
             oechem.OEWriteMolecule(ofs, oemol);
             oemol.delete();
@@ -1560,6 +1573,7 @@ public class ChemFunc {
         con.setRequestProperty("accept","application/json");
         con.setRequestProperty("Content-Type", "application/json");
         con.setRequestMethod("POST");
+
         JSONParser parser = new JSONParser();
         JSONArray smilesList = new JSONArray();
         int index = -1;
@@ -1634,6 +1648,22 @@ public class ChemFunc {
         }
     }
 
+    public static void generateAlogD(Vector<PropertyMolecule> mols) throws MalformedURLException, XmlRpcException, ParseException, ConnectException {
+        admeClient = getADMEClient();
+        String inputSdf = convertMolVectorToSDFString(mols);
+        Object[] args = new Object[]{inputSdf};
+        String result = (String)admeClient.execute("alogd",args);
+        JSONParser parser = new JSONParser();
+        JSONObject obj = (JSONObject)parser.parse(result);
+        int idx = 0;
+        for(PropertyMolecule mol:mols){
+            String moka_id = ""+idx++;
+            if(obj.containsKey(moka_id)) {
+                double value = (Double)obj.get(moka_id);
+                mol.addProperty("ALogD", ""+value);
+            }
+        }
+    }
 
     public static void generateMoKaDescriptors(Vector<PropertyMolecule> mols) throws MalformedURLException, XmlRpcException, ParseException, ConnectException {
         admeClient = getADMEClient();
