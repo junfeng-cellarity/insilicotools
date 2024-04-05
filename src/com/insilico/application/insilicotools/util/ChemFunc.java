@@ -486,7 +486,12 @@ public class ChemFunc {
             while(oechem.OEReadMolecule(ifs,mol)){
                     PropertyMolecule propertyMolecule = new PropertyMolecule(mol);
                     int moka_id = Integer.parseInt(oechem.OEGetSDData(mol,"moka_id"));
-                    double strainEnergy = Double.parseDouble(oechem.OEGetSDData(mol,"r_mmod_Relative_Potential_Energy-S-OPLS"))/4.17;
+                    double strainEnergy = 0.0;
+                    if(oechem.OEHasSDData(mol,"r_mmod_Relative_Potential_Energy-S-OPLS")) {
+                        strainEnergy = Double.parseDouble(oechem.OEGetSDData(mol, "r_mmod_Relative_Potential_Energy-S-OPLS")) / 4.17;
+                    }else if(oechem.OEHasSDData(mol,"r_f3d_relative_energy")){
+                        strainEnergy = Double.parseDouble(oechem.OEGetSDData(mol,"r_f3d_relative_energy"));
+                    }
                     double overlayScore = Double.parseDouble(oechem.OEGetSDData(mol,"r_phase_Shape_Sim"));
                     propertyMolecule.addProperty("Strain Energy", nf.format(strainEnergy));
                     propertyMolecule.addProperty("Overlay Score", nf.format(overlayScore));
