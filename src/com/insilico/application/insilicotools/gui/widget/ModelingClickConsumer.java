@@ -726,7 +726,7 @@ public class ModelingClickConsumer extends JyMolClickConsumer implements JymolCl
 			}
 		});
 
-		JMenuItem minimizeOPLSItem = new JMenuItem("Minimize with OPLS");
+		JMenuItem minimizeOPLSItem = new JMenuItem("Minimize");
 		minimizeOPLSItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -830,7 +830,7 @@ public class ModelingClickConsumer extends JyMolClickConsumer implements JymolCl
 
 		selectedMoleculeMenu.add(changeColorItem);
 		selectedMoleculeMenu.add(copyAsSdfItem);
-        selectedMoleculeMenu.add(minimizeItem);
+        //selectedMoleculeMenu.add(minimizeItem);
         selectedMoleculeMenu.add(constrainedMinimizeItem);
         selectedMoleculeMenu.add(minimizeOPLSItem);
         selectedMoleculeMenu.add(minimizeReceptorItem);
