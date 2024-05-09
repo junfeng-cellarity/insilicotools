@@ -58,7 +58,8 @@ public class MyCompoundModifyDialog extends StandardDialog {
                     e1.printStackTrace();
                 }
 
-                myCompound = new Compound(-1,nameField.getText(),sketcher.getMol("sdf"),sketcher.getMol("smiles:u,a"),cdx, InSlilicoPanel.getInstance().getUserName(), new java.sql.Date(System.currentTimeMillis()), project.getProject_id(),statusCB.getItemAt(statusCB.getSelectedIndex()).getStatus_id(),0,0);                myCompound.setStatus_id(statusCB.getItemAt(statusCB.getSelectedIndex()).getStatus_id());
+                myCompound = new Compound(-1,nameField.getText(),sketcher.getMol("sdf"),sketcher.getMol("smiles:u,a"),cdx, new java.sql.Date(System.currentTimeMillis()), project.getProject_id(),statusCB.getItemAt(statusCB.getSelectedIndex()).getStatus_id(),0,0);
+                myCompound.setStatus_id(statusCB.getItemAt(statusCB.getSelectedIndex()).getStatus_id());
                 myCompound.setMol(molStr);
                 myCompound.setName(mol_name);
                 myCompound.setChanged(true);

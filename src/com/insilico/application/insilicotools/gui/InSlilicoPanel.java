@@ -501,6 +501,297 @@ public class InSlilicoPanel extends JPanel {
         });
         toolBar.add(pasteBtn);
 
+        JButton calculateBtn = new JButton("Calculation", ImageUtil.resizeIcon(new ImageIcon(getClass().getClassLoader().getResource("Calculator-icon.png"))));
+        calculateBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(molecules.size()==0){
+                    JOptionPane.showMessageDialog(InSlilicoPanel.this,"No molecules available.");
+                    return;
+                }
+                if(propertySelectionDialog==null){
+                    propertySelectionDialog = new PropertySelectionDialog(ChemFunc.properties,ChemFunc.adme_models,ChemFunc.safety_models,ChemFunc.other_models);
+                }
+                propertySelectionDialog.setLocationRelativeTo(InSlilicoPanel.this);
+                propertySelectionDialog.setVisible(true);
+                if(propertySelectionDialog.isSubmitted){
+                    final Vector<String> selectedProperties = propertySelectionDialog.getContentPane().getSelectedProperties();
+                    String propertyString = Joiner.on(";").join(selectedProperties);
+                    inSilicoTools.getInstance().logPrediction(propertyString,molecules.size());
+                    String selectedTagTmp = null;
+                    String unitTmp = null;
+                    String selectedLogP = null;
+                    if(selectedProperties.contains("Ligand Lipophilic Efficiency")){
+                        LipophilicEfficiencyDialog dialog = new LipophilicEfficiencyDialog(existingTags);
+                        dialog.setLocationRelativeTo(InSlilicoPanel.this);
+                        dialog.setVisible(true);
+                        if(dialog.isSubmitted()){
+                            selectedLogP = dialog.getLogpType();
+                            selectedTagTmp = dialog.getSelectedTag();
+                            unitTmp = dialog.getUnit();
+                        }
+                    }
+                    else if(selectedProperties.contains("Ligand Efficiency")){
+                        LigandEfficiencyDialog dialog = new LigandEfficiencyDialog(existingTags);
+                        dialog.setLocationRelativeTo(InSlilicoPanel.this);
+                        dialog.setVisible(true);
+                        if(dialog.isSubmitted()){
+                            selectedTagTmp = dialog.getSelectedTag();
+                            unitTmp = dialog.getUnit();
+                        }
+                    }
+                    final String selectedTag = selectedTagTmp;
+                    final String unit = unitTmp;
+                    final String logpType = selectedLogP;
+                    if(logpType!=null){
+                        String newPropertyName = "Ligand Lipophilic Efficiency" + "_" + logpType;
+                        selectedProperties.remove("Ligand Lipophilic Efficiency");
+                        selectedProperties.add(newPropertyName);
+                    }
+
+                    progressMonitor.setProgress(DesignProgressMonitor.INDETERMINATE);
+                    SwingWorker sw = new SwingWorker() {
+                        @Override
+                        protected Object doInBackground() throws Exception {
+                            try {
+//                                "MoKa LogP","MoKa LogD","MoKa pKa", "CNS MPO", "No. Aromatic Rings"
+//                                "Passive Permeability","PgP Substrate", "Plasma Protein Binding (Human)",
+//                                        "pH-Solubility Profile","pH-Lipophilicity Profile","VolSurf ADME Report","Structure Alerts","hERG inhibition"
+//                                "cHLM","cHPPB","cMDR1","cRLM","cRPPB","cSolubility"
+                                ChemFunc.calculateOEProperty(molecules);
+                                if(selectedProperties.contains("cHLM")||selectedProperties.contains("cHPPB")||selectedProperties.contains("cMDR1")||selectedProperties.contains("cRLM")||selectedProperties.contains("cRPPB")||selectedProperties.contains("cSolubility")){
+                                    ChemFunc.generateInSilicoADMEproperties(molecules);
+
+                                }
+                                if(selectedProperties.contains("Consensus LogP")||selectedProperties.contains("CNS PET MPO")||selectedProperties.contains("CNS MPO")||selectedProperties.contains("CNS mTEMPO")||selectedProperties.contains("ChemAxon LogP")||(logpType!=null&&logpType.equals("ChemAxon LogP"))){
+                                    ChemFunc.calculateChemAxonLogP(molecules,null);
+                                }
+                                if(selectedProperties.contains("Consensus LogP")||selectedProperties.contains("CNS mTEMPO")){
+                                    for(PropertyMolecule mol:molecules){
+                                        mol.addConsensusLogP();
+                                    }
+                                }
+                                if(selectedProperties.contains("CNS mTEMPO")){
+                                    ChemFunc.calculateCNSTempoScore(molecules);
+                                }
+                                if(selectedProperties.contains("BB Ratio")){
+                                    ChemFunc.generateBBB(molecules);
+                                }
+
+                                if(selectedProperties.contains("ChemAxon LogD")||selectedProperties.contains("CNS MPO")||selectedProperties.contains("CNS PET MPO")){
+                                    ChemFunc.calculateChemAxonLogDNeutral(molecules,null);
+                                }
+                                if(selectedProperties.contains("ChemAxon Acidic pKa")||selectedProperties.contains("ChemAxon Basic pKa")||selectedProperties.contains("CNS MPO")||selectedProperties.contains("CNS PET MPO")){
+                                    ChemFunc.calculateChemAxon_pKa(molecules,null);
+                                    if(!selectedProperties.contains("MoKa Basic pKa")&&!selectedProperties.contains("MoKa Acidic pKa")){
+                                        InSilicoToolOptions.pka_type = PropertyMolecule.CHEMAXON_PKA;
+                                    }
+                                }
+
+                                if(selectedProperties.contains("MoKa LogP") || selectedProperties.contains("MoKa LogD") || selectedProperties.contains("MoKa pKa")){
+                                    ChemFunc.generateMoKaDescriptors(molecules);
+                                }
+
+                                if(selectedProperties.contains("ALogD")){
+                                    ChemFunc.generateAlogD(molecules);
+                                }
+
+                                if(selectedProperties.contains("CNS MPO")){
+                                    ChemFunc.generateCNSMPODescriptors(molecules,false);
+                                }
+
+                                if(selectedProperties.contains("CNS PET MPO")){
+                                    ChemFunc.generateCNSMPODescriptors(molecules,  true);
+                                }
+
+
+                                if(selectedProperties.contains("No. Aromatic Rings")){
+                                    ChemFunc.calculateNoAroRings(molecules);
+                                }
+
+                                if(selectedProperties.contains("No. Aromatic Ring Systems")){
+                                    ChemFunc.generateNoAromaticRingsDescriptors(molecules);
+                                }
+
+                                if(selectedProperties.contains("Plasma Protein Binding (Human)")){
+                                    ChemFunc.generatePlasmaProteinBinding(molecules);
+                                }
+                                if(selectedProperties.contains("Structure Alerts")){
+                                    StructureAlert[] alerts = ChemFunc.process_structure_alerts();
+                                    for(PropertyMolecule mol:molecules){
+                                        mol.addStructureAlerts(alerts);
+                                    }
+                                }
+
+                                //todo:
+                                //todo: add new ADME models from ML group
+                                //todo:
+                                for(String model:ChemFunc.adme_models){
+                                    if(selectedProperties.contains(model)){
+                                        ChemFunc.runMLModels(molecules,model);
+                                    }
+                                }
+
+                                if(selectedProperties.contains("hERG inhibition")){
+                                    ChemFunc.generateHERG(molecules);
+                                }
+
+                                if(selectedProperties.contains("RLM Qh%")){
+                                    ChemFunc.generateRLM(molecules);
+                                }
+
+                                if(selectedProperties.contains("Efflux Ratio(B-A/A-B)1uM (SVM)")){
+                                    ChemFunc.generateEffluxSVM(molecules);
+                                }
+
+                                if(selectedProperties.contains("Efflux Ratio(B-A/A-B)1uM (Kriging)")){
+                                    ChemFunc.generateEffluxKrig(molecules);
+                                }
+
+                                if(selectedProperties.contains("Human VDss(L/kg)")){
+                                    ChemFunc.generateVDss(molecules);
+                                }
+
+                                if(selectedProperties.contains("Ames")){
+                                    ChemFunc.predictAMES(molecules);
+                                }
+
+                                if(selectedProperties.contains("Clearance Route")){
+                                    ChemFunc.predictClearanceMechanism(molecules);
+                                    selectedProperties.add("PC_1");
+                                    selectedProperties.add("PC_2");
+                                }
+
+                                //"Metabolic Clearance","Renal Clearance"
+                                if(selectedProperties.contains("Human Renal Clearance(mL/min/kg)")){
+                                    ChemFunc.predictClearance(molecules,false);
+                                }
+
+                                if(selectedProperties.contains("Human Metabolic Clearance(mL/min/kg)")){
+                                    ChemFunc.predictClearance(molecules,true);
+                                }
+
+                                if(selectedProperties.contains("Principal Moment of Inertia (NPR1,NPR2)")){
+                                    ChemFunc.calculatePMIBatch(molecules);
+                                    selectedProperties.remove("Principal Moment of Inertia (NPR1,NPR2)");
+                                    selectedProperties.add("NPR1");
+                                    selectedProperties.add("NPR2");
+                                }
+
+                                //"Volume3D", "SurfaceArea3D","PolarSurfaceArea3D", "DipoleMoment3D"
+                                if(selectedProperties.contains("Volume3D")||selectedProperties.contains("SurfaceArea3D")
+                                        ||selectedProperties.contains("PolarSurfaceArea3D")||selectedProperties.contains("DipoleMoment3D")){
+                                    for(PropertyMolecule m:molecules) {
+                                        OEChemFunc.getInstance().calculate3DSurfaceVolumeDipole(m);
+                                    }
+                                }
+
+                                if(selectedProperties.contains("Metabolic Stability")){
+                                    ChemFunc.calculateMetabolicStability(molecules);
+                                }
+
+                                if(selectedProperties.contains("Log_Solubility_pH7")){
+                                    ChemFunc.calculateSolubility_pH_7(molecules);
+                                }
+
+                                if(selectedProperties.contains("HOMO")||selectedProperties.contains("LUMO")|selectedProperties.contains("HBS")){
+                                    ChemFunc.getMopacProperties(molecules, new ProgressReporter() {
+                                        @Override
+                                        public void reportProgress(String note, int progress) {
+                                            progressMonitor.setNote(note);
+                                            progressMonitor.setProgress(progress);
+                                        }
+                                    });
+                                }
+                                if(selectedProperties.contains("hERG")){
+                                    ChemFunc.predict_hERG_DL(molecules);
+                                }
+
+                                if(selectedProperties.contains("Papp A->B")){
+                                    ChemFunc.predict_MDCK_DL(molecules);
+                                }
+
+                                if(selectedProperties.contains("General Metabolic Stability: T1/2 (min) (Mouse)")){
+                                    ChemFunc.predict_MSM_DL(molecules);
+                                }
+
+                                if(selectedTag!=null&&unit!=null){
+                                    double factor = 1e-6;
+                                    if(unit.equals("nM")){
+                                        factor = 1e-9;
+                                    }
+                                    for(PropertyMolecule mol:molecules){
+                                        String tagData = oechem.OEGetSDData(mol.getMol(), selectedTag);
+                                        System.out.println(tagData);
+                                        if(tagData != null) {
+                                            try {
+                                                double value = Double.parseDouble(tagData);
+                                                double pIC50 = - Math.log10(value*factor);
+                                                if(logpType!=null) {
+                                                    MolProperty property = mol.getProperty(logpType);
+                                                    if(property!=null) {
+                                                        double LLE = pIC50 - property.getValue();
+                                                        String newPropertyName = "Ligand Lipophilic Efficiency" + "_" + logpType;
+                                                        mol.addProperty(newPropertyName, "" + LLE);
+                                                    }
+                                                }
+                                                double LE = 1.4 * pIC50 / mol.getHeavyAtomCount();
+                                                mol.addProperty("Ligand Efficiency",""+LE);
+                                            } catch (NumberFormatException e1) {
+
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (IOException e1) {
+                                JOptionPane.showMessageDialog(InSlilicoPanel.this,e1.getMessage());
+                            }
+                            return null;
+                        }
+
+                        @Override
+                        protected void process(List chunks) {
+                            Vector v = (Vector) chunks.get(chunks.size()-1);
+                            String note = (String)v.get(0);
+                            int progress = (Integer) v.get(1);
+                            progressMonitor.setNote(note);
+                            progressMonitor.setProgress(progress);
+                        }
+
+                        @Override
+                        protected void done() {
+                            try {
+                                get();
+                                for(PropertyMolecule p:molecules){
+                                    OESDDataIter oesdDataIter = oechem.OEGetSDDataPairs(p.getMol());
+                                    while(oesdDataIter.hasNext()){
+                                        String tag = oesdDataIter.next().GetTag();
+                                        if(!existingTags.contains(tag)){
+                                            existingTags.add(tag);
+                                        }
+                                    }
+                                }
+                                for(String p:tableModel.getSelectedProperties()){
+                                    if(existingTags.contains(p)){
+                                        selectedProperties.add(p);
+                                    }
+                                }
+                                tableModel.setSelectedProperties(selectedProperties);
+                                updateMolTable();
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                                JOptionPane.showMessageDialog(InSlilicoPanel.this,e1.getMessage());
+                            }finally {
+                                progressMonitor.close();
+                            }
+                        }
+                    };
+                    sw.execute();
+                }
+            }
+        });
+        toolBar.add(calculateBtn);
+
         JButton eggBtn = new JButton("Egan Egg", ImageUtil.resizeIcon(new ImageIcon(getClass().getClassLoader().getResource("software-egg-icon_small.png"))));
         eggBtn.addActionListener(new drawEganEggListener());
         toolBar.add(eggBtn);
@@ -822,296 +1113,7 @@ public class InSlilicoPanel extends JPanel {
 
 
 
-        JButton calculateBtn = new JButton("Calculation", ImageUtil.resizeIcon(new ImageIcon(getClass().getClassLoader().getResource("Calculator-icon.png"))));
-        calculateBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(molecules.size()==0){
-                    JOptionPane.showMessageDialog(InSlilicoPanel.this,"No molecules available.");
-                    return;
-                }
-                if(propertySelectionDialog==null){
-                    propertySelectionDialog = new PropertySelectionDialog(ChemFunc.properties,ChemFunc.adme_models,ChemFunc.safety_models,ChemFunc.other_models);
-                }
-                propertySelectionDialog.setLocationRelativeTo(InSlilicoPanel.this);
-                propertySelectionDialog.setVisible(true);
-                if(propertySelectionDialog.isSubmitted){
-                    final Vector<String> selectedProperties = propertySelectionDialog.getContentPane().getSelectedProperties();
-                    String propertyString = Joiner.on(";").join(selectedProperties);
-                    inSilicoTools.getInstance().logPrediction(propertyString,molecules.size());
-                    String selectedTagTmp = null;
-                    String unitTmp = null;
-                    String selectedLogP = null;
-                    if(selectedProperties.contains("Ligand Lipophilic Efficiency")){
-                        LipophilicEfficiencyDialog dialog = new LipophilicEfficiencyDialog(existingTags);
-                        dialog.setLocationRelativeTo(InSlilicoPanel.this);
-                        dialog.setVisible(true);
-                        if(dialog.isSubmitted()){
-                            selectedLogP = dialog.getLogpType();
-                            selectedTagTmp = dialog.getSelectedTag();
-                            unitTmp = dialog.getUnit();
-                        }
-                    }
-                    else if(selectedProperties.contains("Ligand Efficiency")){
-                        LigandEfficiencyDialog dialog = new LigandEfficiencyDialog(existingTags);
-                        dialog.setLocationRelativeTo(InSlilicoPanel.this);
-                        dialog.setVisible(true);
-                        if(dialog.isSubmitted()){
-                            selectedTagTmp = dialog.getSelectedTag();
-                            unitTmp = dialog.getUnit();
-                        }
-                    }
-                    final String selectedTag = selectedTagTmp;
-                    final String unit = unitTmp;
-                    final String logpType = selectedLogP;
-                    if(logpType!=null){
-                        String newPropertyName = "Ligand Lipophilic Efficiency" + "_" + logpType;
-                        selectedProperties.remove("Ligand Lipophilic Efficiency");
-                        selectedProperties.add(newPropertyName);
-                    }
 
-                    progressMonitor.setProgress(DesignProgressMonitor.INDETERMINATE);
-                    SwingWorker sw = new SwingWorker() {
-                        @Override
-                        protected Object doInBackground() throws Exception {
-                            try {
-//                                "MoKa LogP","MoKa LogD","MoKa pKa", "CNS MPO", "No. Aromatic Rings"
-//                                "Passive Permeability","PgP Substrate", "Plasma Protein Binding (Human)",
-//                                        "pH-Solubility Profile","pH-Lipophilicity Profile","VolSurf ADME Report","Structure Alerts","hERG inhibition"
-//                                "cHLM","cHPPB","cMDR1","cRLM","cRPPB","cSolubility"
-                                ChemFunc.calculateOEProperty(molecules);
-                                if(selectedProperties.contains("cHLM")||selectedProperties.contains("cHPPB")||selectedProperties.contains("cMDR1")||selectedProperties.contains("cRLM")||selectedProperties.contains("cRPPB")||selectedProperties.contains("cSolubility")){
-                                    ChemFunc.generateInSilicoADMEproperties(molecules);
-
-                                }
-                                if(selectedProperties.contains("Consensus LogP")||selectedProperties.contains("CNS PET MPO")||selectedProperties.contains("CNS MPO")||selectedProperties.contains("CNS mTEMPO")||selectedProperties.contains("ChemAxon LogP")||(logpType!=null&&logpType.equals("ChemAxon LogP"))){
-                                    ChemFunc.calculateChemAxonLogP(molecules,null);
-                                }
-                                if(selectedProperties.contains("Consensus LogP")||selectedProperties.contains("CNS mTEMPO")){
-                                    for(PropertyMolecule mol:molecules){
-                                        mol.addConsensusLogP();
-                                    }
-                                }
-                                if(selectedProperties.contains("CNS mTEMPO")){
-                                    ChemFunc.calculateCNSTempoScore(molecules);
-                                }
-                                if(selectedProperties.contains("BB Ratio")){
-                                    ChemFunc.generateBBB(molecules);
-                                }
-
-                                if(selectedProperties.contains("ChemAxon LogD")||selectedProperties.contains("CNS MPO")||selectedProperties.contains("CNS PET MPO")){
-                                    ChemFunc.calculateChemAxonLogDNeutral(molecules,null);
-                                }
-                                if(selectedProperties.contains("ChemAxon Acidic pKa")||selectedProperties.contains("ChemAxon Basic pKa")||selectedProperties.contains("CNS MPO")||selectedProperties.contains("CNS PET MPO")){
-                                    ChemFunc.calculateChemAxon_pKa(molecules,null);
-                                    if(!selectedProperties.contains("MoKa Basic pKa")&&!selectedProperties.contains("MoKa Acidic pKa")){
-                                        InSilicoToolOptions.pka_type = PropertyMolecule.CHEMAXON_PKA;
-                                    }
-                                }
-
-                                if(selectedProperties.contains("MoKa LogP") || selectedProperties.contains("MoKa LogD") || selectedProperties.contains("MoKa pKa")){
-                                    ChemFunc.generateMoKaDescriptors(molecules);
-                                }
-
-                                if(selectedProperties.contains("ALogD")){
-                                    ChemFunc.generateAlogD(molecules);
-                                }
-
-                                if(selectedProperties.contains("CNS MPO")){
-                                    ChemFunc.generateCNSMPODescriptors(molecules,false);
-                                }
-
-                                if(selectedProperties.contains("CNS PET MPO")){
-                                    ChemFunc.generateCNSMPODescriptors(molecules,  true);
-                                }
-
-
-                                if(selectedProperties.contains("No. Aromatic Rings")){
-                                    ChemFunc.calculateNoAroRings(molecules);
-                                }
-
-                                if(selectedProperties.contains("No. Aromatic Ring Systems")){
-                                    ChemFunc.generateNoAromaticRingsDescriptors(molecules);
-                                }
-
-                                if(selectedProperties.contains("Plasma Protein Binding (Human)")){
-                                    ChemFunc.generatePlasmaProteinBinding(molecules);
-                                }
-                                if(selectedProperties.contains("Structure Alerts")){
-                                    StructureAlert[] alerts = ChemFunc.process_structure_alerts();
-                                    for(PropertyMolecule mol:molecules){
-                                        mol.addStructureAlerts(alerts);
-                                    }
-                                }
-
-                                //todo:
-                                //todo: add new ADME models from ML group
-                                //todo:
-                                for(String model:ChemFunc.adme_models){
-                                    if(selectedProperties.contains(model)){
-                                        ChemFunc.runMLModels(molecules,model);
-                                    }
-                                }
-
-                                if(selectedProperties.contains("hERG inhibition")){
-                                    ChemFunc.generateHERG(molecules);
-                                }
-
-                                if(selectedProperties.contains("RLM Qh%")){
-                                    ChemFunc.generateRLM(molecules);
-                                }
-
-                                if(selectedProperties.contains("Efflux Ratio(B-A/A-B)1uM (SVM)")){
-                                    ChemFunc.generateEffluxSVM(molecules);
-                                }
-
-                                if(selectedProperties.contains("Efflux Ratio(B-A/A-B)1uM (Kriging)")){
-                                    ChemFunc.generateEffluxKrig(molecules);
-                                }
-
-                                if(selectedProperties.contains("Human VDss(L/kg)")){
-                                    ChemFunc.generateVDss(molecules);
-                                }
-
-                                if(selectedProperties.contains("Ames")){
-                                    ChemFunc.predictAMES(molecules);
-                                }
-
-                                if(selectedProperties.contains("Clearance Route")){
-                                    ChemFunc.predictClearanceMechanism(molecules);
-                                    selectedProperties.add("PC_1");
-                                    selectedProperties.add("PC_2");
-                                }
-
-                                //"Metabolic Clearance","Renal Clearance"
-                                if(selectedProperties.contains("Human Renal Clearance(mL/min/kg)")){
-                                    ChemFunc.predictClearance(molecules,false);
-                                }
-
-                                if(selectedProperties.contains("Human Metabolic Clearance(mL/min/kg)")){
-                                    ChemFunc.predictClearance(molecules,true);
-                                }
-
-                                if(selectedProperties.contains("Principal Moment of Inertia (NPR1,NPR2)")){
-                                    ChemFunc.calculatePMIBatch(molecules);
-                                    selectedProperties.remove("Principal Moment of Inertia (NPR1,NPR2)");
-                                    selectedProperties.add("NPR1");
-                                    selectedProperties.add("NPR2");
-                                }
-
-                                //"Volume3D", "SurfaceArea3D","PolarSurfaceArea3D", "DipoleMoment3D"
-                                if(selectedProperties.contains("Volume3D")||selectedProperties.contains("SurfaceArea3D")
-                                        ||selectedProperties.contains("PolarSurfaceArea3D")||selectedProperties.contains("DipoleMoment3D")){
-                                    for(PropertyMolecule m:molecules) {
-                                        OEChemFunc.getInstance().calculate3DSurfaceVolumeDipole(m);
-                                    }
-                                }
-
-                                if(selectedProperties.contains("Metabolic Stability")){
-                                    ChemFunc.calculateMetabolicStability(molecules);
-                                }
-
-                                if(selectedProperties.contains("Log_Solubility_pH7")){
-                                    ChemFunc.calculateSolubility_pH_7(molecules);
-                                }
-
-                                if(selectedProperties.contains("HOMO")||selectedProperties.contains("LUMO")|selectedProperties.contains("HBS")){
-                                    ChemFunc.getMopacProperties(molecules, new ProgressReporter() {
-                                        @Override
-                                        public void reportProgress(String note, int progress) {
-                                            progressMonitor.setNote(note);
-                                            progressMonitor.setProgress(progress);
-                                        }
-                                    });
-                                }
-                                if(selectedProperties.contains("hERG")){
-                                    ChemFunc.predict_hERG_DL(molecules);
-                                }
-
-                                if(selectedProperties.contains("Papp A->B")){
-                                    ChemFunc.predict_MDCK_DL(molecules);
-                                }
-
-                                if(selectedProperties.contains("General Metabolic Stability: T1/2 (min) (Mouse)")){
-                                    ChemFunc.predict_MSM_DL(molecules);
-                                }
-
-                                if(selectedTag!=null&&unit!=null){
-                                    double factor = 1e-6;
-                                    if(unit.equals("nM")){
-                                        factor = 1e-9;
-                                    }
-                                    for(PropertyMolecule mol:molecules){
-                                        String tagData = oechem.OEGetSDData(mol.getMol(), selectedTag);
-                                        System.out.println(tagData);
-                                        if(tagData != null) {
-                                            try {
-                                                double value = Double.parseDouble(tagData);
-                                                double pIC50 = - Math.log10(value*factor);
-                                                if(logpType!=null) {
-                                                    MolProperty property = mol.getProperty(logpType);
-                                                    if(property!=null) {
-                                                        double LLE = pIC50 - property.getValue();
-                                                        String newPropertyName = "Ligand Lipophilic Efficiency" + "_" + logpType;
-                                                        mol.addProperty(newPropertyName, "" + LLE);
-                                                    }
-                                                }
-                                                double LE = 1.4 * pIC50 / mol.getHeavyAtomCount();
-                                                mol.addProperty("Ligand Efficiency",""+LE);
-                                            } catch (NumberFormatException e1) {
-
-                                            }
-                                        }
-                                    }
-                                }
-                            } catch (IOException e1) {
-                                JOptionPane.showMessageDialog(InSlilicoPanel.this,e1.getMessage());
-                            }
-                            return null;
-                        }
-
-                        @Override
-                        protected void process(List chunks) {
-                            Vector v = (Vector) chunks.get(chunks.size()-1);
-                            String note = (String)v.get(0);
-                            int progress = (Integer) v.get(1);
-                            progressMonitor.setNote(note);
-                            progressMonitor.setProgress(progress);
-                        }
-
-                        @Override
-                        protected void done() {
-                            try {
-                                get();
-                                for(PropertyMolecule p:molecules){
-                                    OESDDataIter oesdDataIter = oechem.OEGetSDDataPairs(p.getMol());
-                                    while(oesdDataIter.hasNext()){
-                                        String tag = oesdDataIter.next().GetTag();
-                                        if(!existingTags.contains(tag)){
-                                            existingTags.add(tag);
-                                        }
-                                    }
-                                }
-                                for(String p:tableModel.getSelectedProperties()){
-                                    if(existingTags.contains(p)){
-                                        selectedProperties.add(p);
-                                    }
-                                }
-                                tableModel.setSelectedProperties(selectedProperties);
-                                updateMolTable();
-                            } catch (Exception e1) {
-                                e1.printStackTrace();
-                                JOptionPane.showMessageDialog(InSlilicoPanel.this,e1.getMessage());
-                            }finally {
-                                progressMonitor.close();
-                            }
-                        }
-                    };
-                    sw.execute();
-                }
-            }
-        });
-        toolBar.add(calculateBtn);
         workspacePanel.add(toolBar, BorderLayout.NORTH);
     }
 

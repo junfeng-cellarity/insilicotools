@@ -96,7 +96,7 @@ public class ChemFunc {
 //        Permeability https://perm-public-endpoint-yatai.cellarity.bentoml.ai
 //        MoKa https://moka-test2-yatai.cellarity.bentoml.ai
 
-        ADME_URLS.put("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)","https://perm-public-endpoint-yatai.cellarity.bentoml.ai/predict");
+        ADME_URLS.put("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)","https://perm-public-endpoint-e6d7a6c9.cellarity.bentoml.ai/predict");
         ADME_URLS.put("Cellarity_hERG_IC50(uM)","https://herg-service-yatai.cellarity.bentoml.ai/predict");
         ADME_URLS.put("hepatocyte stability","https://hepstability-service-yatai.cellarity.bentoml.ai/predict");
         ADME_URLS.put("blood stability","https://bloodstability-service-yatai.cellarity.bentoml.ai/predict");
@@ -289,7 +289,7 @@ public class ChemFunc {
         return result;
     }
 
-    public static Vector<OEMol> generateConformers(Vector<PropertyMolecule> propertyMolecules, double ewindow, double rms){
+    public static Vector<OEMol> generateConformers(Vector<PropertyMolecule> propertyMolecules, double ewindow, double rms, String confMode){
         HashMap<String,PropertyMolecule> propertyMolDict = new HashMap<>();
         StringBuilder sb = new StringBuilder();
         for(PropertyMolecule propertyMolecule:propertyMolecules){
@@ -305,7 +305,8 @@ public class ChemFunc {
         Object[] args = new Object[]{
                 sb.toString(),
                 ewindow,
-                rms
+                rms,
+                confMode
         };
 
         try {
@@ -542,18 +543,20 @@ public class ChemFunc {
 // docking_method: {confgen|rigid|mininplace|inplace}
 
     public static Vector<PropertyMolecule> dock(String receptorName, Vector<PropertyMolecule> inputMols, int numPoses,
-                                                String dockingMethod, String dockingMode, boolean useRef, String refLigandStr,
+                                                String dockingMethod, String dockingMode, boolean use_macrocycle, boolean useRef, String refLigandStr,
                                                 String core_atoms, String core_smarts, boolean protonation, ProgressReporter progressReporter) throws ModelingException{
         //xmlrpc_docking(self,grid_dir,ligandMolString, poses_per_ligand, precision="SP")
         Vector<PropertyMolecule> propertyMolecules = new Vector<PropertyMolecule>();
         int minPoses = 5;
         Object[] args = null;
+        //   def xmlrpc_docking(self,grid_dir,ligandMolString, poses_per_ligand, docking_method, precision, use_ref = False, refLigandStr = None,
+        //                       core_atoms = None, core_smarts = None, use_macrocycle = False):
         if(useRef&&refLigandStr!=null&&core_atoms!=null&&core_smarts!=null){
             args = new Object[]{receptorName,ChemFunc.convertMolVectorToSDFStringForDocking(inputMols, protonation,progressReporter),
-                    numPoses<minPoses?minPoses:numPoses, dockingMethod, dockingMode, true,refLigandStr,core_atoms,core_smarts};
+                    numPoses<minPoses?minPoses:numPoses, dockingMethod, dockingMode, use_macrocycle, true, refLigandStr,core_atoms,core_smarts};
         }else{
             args = new Object[]{receptorName,ChemFunc.convertMolVectorToSDFStringForDocking(inputMols, protonation, progressReporter),
-                    numPoses<minPoses?minPoses:numPoses, dockingMethod, dockingMode};
+                    numPoses<minPoses?minPoses:numPoses, dockingMethod, dockingMode, use_macrocycle};
         }
         if(progressReporter!=null) {
             progressReporter.reportProgress("Docking molecules ...", DesignProgressMonitor.INDETERMINATE);
@@ -1648,9 +1651,12 @@ public class ChemFunc {
                 }
             }
 
-        } else {
+        }
+        /*
+        else {
             throw new IOException("Failed to calculate ");
         }
+         */
     }
 
     public static void generateAlogD(Vector<PropertyMolecule> mols) throws MalformedURLException, XmlRpcException, ParseException, ConnectException {

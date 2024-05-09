@@ -185,6 +185,7 @@ public class MolDockingWizard extends MolWizard {
             //btnPanel.add(clashesCB);
 
             final JCheckBox consCB = new JCheckBox("Use Constraint",false);
+            final JCheckBox macrocycleCB = new JCheckBox("All Macrocycles?", false);
             final JButton constraintBtn = new JButton("Define Constraint");
             constraintBtn.setEnabled(false);
 
@@ -245,7 +246,7 @@ public class MolDockingWizard extends MolWizard {
                         @Override
                         protected Object doInBackground() throws Exception {
                             if(dockingVendor.equals("Glide")) {
-                                return ChemFunc.dock(receptorName, candidates, numPoses, dockingMethod, dockingMode,
+                                return ChemFunc.dock(receptorName, candidates, numPoses, dockingMethod, dockingMode, macrocycleCB.isSelected(),
                                         consCB.isSelected(), refLigandStr == null ? ligandMolStr : refLigandStr, core_atoms, core_smarts, protonationCB.isSelected(),
                                         new ProgressReporter() {
                                             @Override
@@ -342,6 +343,7 @@ public class MolDockingWizard extends MolWizard {
             btnPanel.add(protonationCB);
 
             btnPanel.add(consCB);
+            btnPanel.add(macrocycleCB);
             constraintBtn.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {

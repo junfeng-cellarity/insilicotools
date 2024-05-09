@@ -18,6 +18,7 @@ import com.jidesoft.range.Range;
 import openeye.oechem.OEGraphMol;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
@@ -40,7 +41,7 @@ public class ConfSearchInputPanel extends JPanel{
     Mol3DTablePanel resultPanel;
     DesignProgressMonitor progressMonitor;
     MultiInputDialog optionsDialog;
-    String forcefield = "mmffs";
+    String confMode = "fast";
     HashMap<String,Number> defaultOptions = new HashMap<String, Number>(){{
         put("No. Conformations",100);
         put("RMSD",0.1);
@@ -172,18 +173,18 @@ public class ConfSearchInputPanel extends JPanel{
 
     JPanel buildBtnPanel(){
         JPanel p = new JPanel();
-//        JPanel ffp = new JPanel();
-//        ffp.setBorder(new BevelBorder(1));
-//        ffp.add(new JLabel("ForceField:"));
-//        final JComboBox ffcb = new JComboBox(new String[]{"mmffs","opls3"});
-//        ffcb.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                forcefield = (String)ffcb.getSelectedItem();
-//            }
-//        });
-//        ffp.add(ffcb);
-//        p.add(ffp);
+        JPanel ffp = new JPanel();
+        ffp.setBorder(new BevelBorder(1));
+        ffp.add(new JLabel("Mode:"));
+        final JComboBox ffcb = new JComboBox(new String[]{"fast","accurate"});
+        ffcb.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                confMode = (String)ffcb.getSelectedItem();
+            }
+        });
+        ffp.add(ffcb);
+        p.add(ffp);
         JButton optionBtn = new JButton("Options");
         optionBtn.addActionListener(new ActionListener() {
             @Override
@@ -211,7 +212,7 @@ public class ConfSearchInputPanel extends JPanel{
                 SwingWorker sw = new SwingWorker() {
                     @Override
                     protected Object doInBackground() throws Exception {
-                        return OEChemFunc.getInstance().getMultiConformers(pmol.getMol3d(), numConfs, ewindow, rmsd, new ProgressReporter() {
+                        return OEChemFunc.getInstance().getMultiConformers(pmol.getMol3d(), numConfs, ewindow, rmsd, confMode, new ProgressReporter() {
                             @Override
                             public void reportProgress(String note, int progress) {
                                 Vector v = new Vector();
@@ -229,6 +230,9 @@ public class ConfSearchInputPanel extends JPanel{
                         int progress = (Integer) v.get(1);
                         progressMonitor.setNote(note);
                         progressMonitor.setProgress(progress);
+                        if(progress==-1){
+                            progressMonitor.setProgress(DesignProgressMonitor.INDETERMINATE);
+                        }
                     }
 
                     @Override

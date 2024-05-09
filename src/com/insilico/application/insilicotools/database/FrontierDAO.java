@@ -152,6 +152,25 @@ public class FrontierDAO {
         return my_chemist_dict.get(chemist_id);
     }
 
+    public int getChemistId(String chemist){
+        if(my_chemist_dict.isEmpty()){
+            retrieve_My_chemists();
+        }
+        if(chemist==null|chemist.isEmpty()){
+            return 0;
+        }
+        int my_chemist_id = 0;
+
+        for(int chemist_id : my_chemist_dict.keySet()){
+           Chemist my_chemist = my_chemist_dict.get(chemist_id);
+           if(my_chemist.getChemist_name().equals(chemist)){
+               my_chemist_id = chemist_id;
+               break;
+           }
+        }
+        return my_chemist_id;
+    }
+
     public Vector<Chemist> getChemistsByProject(int project_id){
         if(my_chemist_dict.isEmpty()||chemistsByProject.isEmpty()){
             retrieve_My_chemists();
@@ -1107,7 +1126,7 @@ public class FrontierDAO {
         PreparedStatement preparedStatement = null;
         try{
             connection = DriverManager.getConnection(getDbURL_CompoundTracker,user,password);
-            preparedStatement = connection.prepareStatement("update molecules set molfile=?, mol_name=?, status_id=?, document=?, smiles=?, chemist_id=?, psa=?, mw=?, clogp=?, cns_mpo=?, cns_tempo=? where mole_id = ?");
+            preparedStatement = connection.prepareStatement("update molecules set molfile=?, mol_name=?, status_id=?, document=?, smiles=?, chemist_id=?, psa=?, mw=?, clogp=? where mole_id = ?");
             int mol_id = MyCompound.getId();
             String mol_name = MyCompound.getName();
             OEGraphMol mol = MyCompound.getPropertyMol().getMol();
@@ -1141,12 +1160,12 @@ public class FrontierDAO {
             preparedStatement.setDouble(7,MyCompound.getPropertyMol().getPSA());
             preparedStatement.setDouble(8,MyCompound.getPropertyMol().getMW());
             preparedStatement.setDouble(9,MyCompound.getPropertyMol().getCLogP());
-            MolProperty cns_mpo = MyCompound.getPropertyMol().getProperty("CNS MPO");
-            preparedStatement.setDouble(10, cns_mpo==null?0.0:cns_mpo.getValue());
-            MolProperty cns_mTEMPO = MyCompound.getPropertyMol().getProperty("CNS mTEMPO");
-            preparedStatement.setDouble(11, cns_mTEMPO==null?0:cns_mTEMPO.getValue());
+//            MolProperty cns_mpo = MyCompound.getPropertyMol().getProperty("CNS MPO");
+//            preparedStatement.setDouble(10, cns_mpo==null?0.0:cns_mpo.getValue());
+//            MolProperty cns_mTEMPO = MyCompound.getPropertyMol().getProperty("CNS mTEMPO");
+//            preparedStatement.setDouble(11, cns_mTEMPO==null?0:cns_mTEMPO.getValue());
 
-            preparedStatement.setInt(12,mol_id);
+            preparedStatement.setInt(10,mol_id);
             preparedStatement.executeUpdate();
         }finally{
             cleanup(connection,null,preparedStatement);
@@ -1164,8 +1183,8 @@ public class FrontierDAO {
         try{
             connection = DriverManager.getConnection(getDbURL_CompoundTracker,user,password);
             preparedStatement = connection.prepareStatement(
-                    "insert into molecules (molfile, mol_name, project_id,status_id,chemist,document, smiles, chemist_id, psa, mw, clogp, cns_mpo, cns_tempo) " +
-                            "(select ?,?,?,?,?,?,?,?,?,?,?,?,? where not exists (select smiles,project_id from molecules where smiles = ? and project_id = ?) )", PreparedStatement.RETURN_GENERATED_KEYS);
+                    "insert into molecules (molfile, mol_name, project_id,status_id,document, smiles, chemist_id, psa, mw, clogp) " +
+                            "(select ?,?,?,?,?,?,?,?,?,? where not exists (select smiles,project_id from molecules where smiles = ? and project_id = ?) )", PreparedStatement.RETURN_GENERATED_KEYS);
             String mol_name = MyCompound.getName();
             OEGraphMol mol = MyCompound.getPropertyMol().getMol();
             Molecule chemaxonMol = OEChemFunc.getInstance().convertOEChemMol(mol);
@@ -1188,22 +1207,19 @@ public class FrontierDAO {
             preparedStatement.setString(2,mol_name);
             preparedStatement.setInt(3,MyCompound.getProject_id());
             preparedStatement.setInt(4,MyCompound.getStatus_id());
-            preparedStatement.setString(5,MyCompound.getChemist());
-            preparedStatement.setBinaryStream(6,new ByteArrayInputStream(cdx),cdx.length);
-            preparedStatement.setString(7, smiles);
+            preparedStatement.setBinaryStream(5,new ByteArrayInputStream(cdx),cdx.length);
+            preparedStatement.setString(6, smiles);
             Chemist assignedChemist = MyCompound.getAssignedChemist();
             if(assignedChemist==null){
-                preparedStatement.setNull(8, Types.INTEGER);
+                preparedStatement.setNull(7, Types.INTEGER);
             }else {
-                preparedStatement.setInt(8, assignedChemist.getChemist_id());
+                preparedStatement.setInt(7, assignedChemist.getChemist_id());
             }
-            preparedStatement.setDouble(9,MyCompound.getPropertyMol().getPSA());
-            preparedStatement.setDouble(10,MyCompound.getPropertyMol().getMW());
-            preparedStatement.setDouble(11,MyCompound.getPropertyMol().getCLogP());
-            preparedStatement.setDouble(12,MyCompound.getPropertyMol().getProperty("CNS MPO").getValue());
-            preparedStatement.setDouble(13,MyCompound.getPropertyMol().getProperty("CNS mTEMPO").getValue());
-            preparedStatement.setString(14,smiles);
-            preparedStatement.setInt(15,MyCompound.getProject_id());
+            preparedStatement.setDouble(8,MyCompound.getPropertyMol().getPSA());
+            preparedStatement.setDouble(9,MyCompound.getPropertyMol().getMW());
+            preparedStatement.setDouble(10,MyCompound.getPropertyMol().getCLogP());
+            preparedStatement.setString(11,smiles);
+            preparedStatement.setInt(12,MyCompound.getProject_id());
             preparedStatement.executeUpdate();
             rs = preparedStatement.getGeneratedKeys();
             if (rs.next()) {
@@ -1219,12 +1235,9 @@ public class FrontierDAO {
         }
     }
 
-    public Vector<Integer> insertMyCompoundsBatch(String sdfName, String chemist, String nameTag, int project_id, int status_id, Chemist MyChemist) throws SQLException{
+    public Vector<Integer> insertMyCompoundsBatch(String sdfName, String nameTag, int project_id, int status_id, int chemist_id) throws SQLException{
         if(Strings.isNullOrEmpty(sdfName)){
             throw new SQLException("No SDF defined.");
-        }
-        if(Strings.isNullOrEmpty(chemist)){
-            throw new SQLException("No chemist defined.");
         }
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -1234,8 +1247,8 @@ public class FrontierDAO {
             connection = DriverManager.getConnection(getDbURL_CompoundTracker,user,password);
             connection.setAutoCommit(false);
             preparedStatement = connection.prepareStatement(
-                    "insert into molecules (molfile, mol_name, project_id,status_id,chemist,document, smiles, chemist_id) " +
-                            "(select ?,?,?,?,?,?,?,? where not exists (select smiles,project_id from molecules where smiles = ? and project_id = ?) )", PreparedStatement.RETURN_GENERATED_KEYS);
+                    "insert into molecules (molfile, mol_name, project_id, status_id, chemist_id,document, smiles) " +
+                            "(select ?,?,?,?,?,?,? where not exists (select smiles,project_id from molecules where smiles = ? and project_id = ?) )", PreparedStatement.RETURN_GENERATED_KEYS);
             oemolistream ifs = new oemolistream();
             ifs.open(sdfName);
             OEGraphMol mol = new OEGraphMol();
@@ -1272,17 +1285,17 @@ public class FrontierDAO {
                 preparedStatement.setString(2,mol_name);
                 preparedStatement.setInt(3,project_id);
                 preparedStatement.setInt(4,status_id);
-                preparedStatement.setString(5,chemist);
+                preparedStatement.setInt(5,chemist_id);
                 preparedStatement.setBinaryStream(6,new ByteArrayInputStream(cdx),cdx.length);
                 preparedStatement.setString(7, smiles);
-                if(MyChemist==null||MyChemist.getChemist_id()==0){
-                    preparedStatement.setNull(8, Types.INTEGER);
-                }else {
-                    preparedStatement.setInt(8, MyChemist.getChemist_id());
-                }
+//                if(MyChemist==null||MyChemist.getChemist_id()==0){
+//                    preparedStatement.setNull(8, Types.INTEGER);
+//                }else {
+//                    preparedStatement.setInt(8, MyChemist.getChemist_id());
+//                }
 
-                preparedStatement.setString(9,smiles);
-                preparedStatement.setInt(10,project_id);
+                preparedStatement.setString(8,smiles);
+                preparedStatement.setInt(9,project_id);
                 preparedStatement.addBatch();
             }
             preparedStatement.executeBatch();
@@ -1302,15 +1315,15 @@ public class FrontierDAO {
 
     }
 
-    public void addComment(int mol_id, String chemist, String comment) throws SQLException{
+    public void addComment(int mol_id, int chemist_id, String comment) throws SQLException{
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try{
             connection = DriverManager.getConnection(getDbURL_CompoundTracker,user,password);
-            String query = "insert into comments (molecule_id, chemist, comment, date) values (?,?,?,now())";
+            String query = "insert into comments (molecule_id, chemist_id, comment, date) values (?,?,?,now())";
             preparedStatement = connection.prepareStatement(query);
             preparedStatement.setInt(1,mol_id);
-            preparedStatement.setString(2,chemist);
+            preparedStatement.setInt(2,chemist_id);
             preparedStatement.setString(3,comment);
             preparedStatement.executeUpdate();
         }finally {
@@ -1318,15 +1331,15 @@ public class FrontierDAO {
         }
     }
 
-    public void deleteComment(int mol_id, String chemist) throws SQLException{
+    public void deleteComment(int mol_id, int chemist_id) throws SQLException{
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try{
             connection = DriverManager.getConnection(getDbURL_CompoundTracker,user,password);
-            String query = "delete from comments where molecule_id = ? and chemist = ?";
+            String query = "delete from comments where molecule_id = ? and chemist_id = ?";
             preparedStatement = connection.prepareStatement(query);
             preparedStatement.setInt(1,mol_id);
-            preparedStatement.setString(2,chemist);
+            preparedStatement.setInt(2,chemist_id);
             preparedStatement.executeUpdate();
         }finally {
             cleanup(connection,null,preparedStatement);
@@ -1339,13 +1352,13 @@ public class FrontierDAO {
         ResultSet rs = null;
         try {
             connection = DriverManager.getConnection(getDbURL_CompoundTracker, user, password);
-            String query = "select chemist,comment from comments where molecule_id = ? order by date asc";
+            String query = "select chemist_id,comment from comments where molecule_id = ? order by date asc";
             preparedStatement = connection.prepareStatement(query);
             preparedStatement.setInt(1,mol_id);
             rs = preparedStatement.executeQuery();
             StringBuilder sb = new StringBuilder();
             while(rs.next()){
-                String chemist = rs.getString("chemist");
+                String chemist = FrontierDAO.getInstance().getAssignedChemist(rs.getInt("chemist_id")).getChemist_name();
                 String comment = rs.getString("comment");
                 sb.append(String.format("%s:%s\n",chemist.trim(),comment.trim()));
             }
@@ -1364,7 +1377,7 @@ public class FrontierDAO {
         try {
             connection = DriverManager.getConnection(getDbURL_CompoundTracker, user, password);
             String query = "select m.mole_id,m.mol_name, m.document, m.molfile,m.status_id,m.smiles, m.document," +
-                    "m.date, m.chemist, m.chemist_id, avg(r.ranking) as rankings, m.psa, m.mw, m.clogp, m.cns_mpo, m.cns_tempo from molecules m " +
+                    "m.date, m.chemist_id, avg(r.ranking) as rankings, m.psa, m.mw, m.clogp from molecules m " +
                     "full join rankings r on m.mole_id = r.mole_id "+
                     "where m.project_id = ? group by m.mole_id "+
                     "order by date desc";
@@ -1377,7 +1390,6 @@ public class FrontierDAO {
                 String smiles = rs.getString("smiles");
                 String molecule = rs.getString("molfile");
                 byte[] document = rs.getBytes("document");
-                String chemist = rs.getString("chemist");
                 Date date = rs.getDate("date");
                 int status_id = rs.getInt("status_id");
                 int rank = rs.getInt("rankings");
@@ -1385,9 +1397,7 @@ public class FrontierDAO {
                 double psa = rs.getDouble("psa");
                 double mw = rs.getDouble("mw");
                 double clogp = rs.getDouble("clogp");
-                double cns_mpo = rs.getDouble("cns_mpo");
-                double cns_tempo = rs.getDouble("cns_tempo");
-                Compound compound = new Compound(mole_id,name,molecule,smiles,document,chemist,date,project_id,status_id,rank,chemist_id,clogp,mw,psa,cns_tempo,cns_mpo);
+                Compound compound = new Compound(mole_id,name,molecule,smiles,document,date,project_id,status_id,rank,chemist_id,clogp,mw,psa);
                 MyCompounds.add(compound);
             }
             return MyCompounds;

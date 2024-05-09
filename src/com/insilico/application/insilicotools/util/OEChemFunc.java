@@ -643,7 +643,7 @@ public class OEChemFunc {
 		}
 		Vector<PropertyMolecule> inputMols = new Vector<>();
 		inputMols.add(new PropertyMolecule(target));
-		Vector<OEMol> mcMols = ChemFunc.generateConformers(inputMols, energy_window, rmsd);
+		Vector<OEMol> mcMols = ChemFunc.generateConformers(inputMols, energy_window, rmsd, "fast");
 		if(mcMols.isEmpty()){
 			return new Vector<>();
 		}
@@ -1003,10 +1003,13 @@ public class OEChemFunc {
 		return bestMol;
 	}
 
-	public Vector<PropertyMolecule> getMultiConformers(OEGraphMol mol, int nConfs, double ewindow, double rms, ProgressReporter pm) {
+	public Vector<PropertyMolecule> getMultiConformers(OEGraphMol mol, int nConfs, double ewindow, double rms, String confMode, ProgressReporter pm) {
 		Vector<PropertyMolecule> inputMols = new Vector<>();
 		inputMols.add(new PropertyMolecule(mol));
-		Vector<OEMol> mcMols = ChemFunc.generateConformers(inputMols, ewindow, rms);
+		if(pm!=null) {
+			pm.reportProgress("Starting conformation generation ...", -1);
+		}
+		Vector<OEMol> mcMols = ChemFunc.generateConformers(inputMols, ewindow, rms, confMode);
 		if (!mcMols.isEmpty()) {
 			OEMol mcMol = mcMols.get(0);
 			double lowestEnergy = 99999.0;
@@ -1037,6 +1040,13 @@ public class OEChemFunc {
 				}
 			}
 
+			//r_f3d_relative_energy
+			//r_f3d_relative_energy
+			String energyTag = "r_f3d_relative_energy";
+			if(!confMode.equals("fast")){
+				energyTag = "r_mmod_Relative_Potential_Energy-S-OPLS";
+			}
+
 			lowestEnergy = 99999;
 			count = 0;
 			for (Future<String> f : futures) {
@@ -1054,7 +1064,7 @@ public class OEChemFunc {
 						continue;
 					}
 
-					confMol.SetEnergy(Double.parseDouble(oechem.OEGetSDData(confMol, "r_mmod_Relative_Potential_Energy-S-OPLS"))/4.17828);
+					confMol.SetEnergy(Double.parseDouble(oechem.OEGetSDData(confMol, energyTag))/4.17828);
 
 					if ((confMol.GetEnergy() - lowestEnergy) > ewindow) {
 						continue;

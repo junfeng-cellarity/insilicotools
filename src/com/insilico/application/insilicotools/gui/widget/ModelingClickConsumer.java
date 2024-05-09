@@ -759,7 +759,7 @@ public class ModelingClickConsumer extends JyMolClickConsumer implements JymolCl
                         @Override
                         protected Object doInBackground() throws ModelingException {
                             Vector<PropertyMolecule> v =  ChemFunc.dock(receptorName,mols,1,ChemFunc.DOCKING_METHOD_MINIMIZE,
-                                    ChemFunc.DOCKING_MODE_XP,false,null,null,null,false,null);
+                                    ChemFunc.DOCKING_MODE_XP,false,false,null,null,null,false,null);
                             return v.get(0);
                         }
 
@@ -801,7 +801,7 @@ public class ModelingClickConsumer extends JyMolClickConsumer implements JymolCl
                         @Override
                         protected Object doInBackground() throws Exception {
                             Vector<PropertyMolecule> v =  ChemFunc.dock(receptorName,mols,1,ChemFunc.DOCKING_METHOD_SCOREONLY,
-                                    ChemFunc.DOCKING_MODE_XP,false,null,null,null,false,null);
+                                    ChemFunc.DOCKING_MODE_XP, false, false,null,null,null, false,null);
                             return v.get(0);
                         }
 

@@ -153,6 +153,7 @@ public class MyCompoundIdealPanel extends JPanel {
         textPane.setEditable(false);
         JPanel commentBtnPanel = new JPanel();
         addCommentBtn = new JButton("Add Comment");
+        String userName = InSlilicoPanel.getInstance().getUserName();
         addCommentBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -170,7 +171,8 @@ public class MyCompoundIdealPanel extends JPanel {
                         return;
                     }
                     try {
-                        FrontierDAO.getInstance().addComment(mol_id,InSlilicoPanel.getInstance().getUserName(),comment);
+                        int chemist_id = FrontierDAO.getInstance().getChemistId(userName);
+                        FrontierDAO.getInstance().addComment(mol_id,chemist_id,comment);
                         textPane.setText("");
                         textPane.setText(FrontierDAO.getInstance().getMyCompoundComment(mol_id));
                     } catch (SQLException e1) {
@@ -194,7 +196,8 @@ public class MyCompoundIdealPanel extends JPanel {
                     Compound compound = MyCompounds.get(modelRow);
                     int mol_id = compound.getId();
                     try {
-                        FrontierDAO.getInstance().deleteComment(mol_id,InSlilicoPanel.getInstance().getUserName());
+                        int chemist_id = FrontierDAO.getInstance().getChemistId(userName);
+                        FrontierDAO.getInstance().deleteComment(mol_id, chemist_id);
                         textPane.setText("");
                     } catch (SQLException e1) {
                         e1.printStackTrace();
@@ -413,6 +416,7 @@ public class MyCompoundIdealPanel extends JPanel {
         });
 
         insertBatchBtn = new JButton("Batch Insert Ideas ...");
+        String userName = InSlilicoPanel.getInstance().getUserName();
         insertBatchBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -425,6 +429,7 @@ public class MyCompoundIdealPanel extends JPanel {
                     final Project project = dialog.getMyProject();
                     final Status status = dialog.getMyStatus();
                     final String nameTag = dialog.getMolNameTag();
+                    final int chemist_id = FrontierDAO.getInstance().getChemistId(userName);
                     if(status==null){
                         JOptionPane.showMessageDialog(MyCompoundIdealPanel.this,"No status specified");
                         return;
@@ -440,7 +445,7 @@ public class MyCompoundIdealPanel extends JPanel {
                     SwingWorker sw = new SwingWorker() {
                         @Override
                         protected Object doInBackground() throws Exception {
-                            Vector<Integer> idList = FrontierDAO.getInstance().insertMyCompoundsBatch(sdfPathName, InSlilicoPanel.getInstance().getUserName(), nameTag, project.getProject_id(), status.getStatus_id(),dialog.getMyChemist());
+                            Vector<Integer> idList = FrontierDAO.getInstance().insertMyCompoundsBatch(sdfPathName, nameTag, project.getProject_id(), status.getStatus_id(), chemist_id);
                             return idList;
                         }
 
@@ -472,7 +477,7 @@ public class MyCompoundIdealPanel extends JPanel {
                 for(int i=MyCompounds.size()-1;i>-1;i--){
                     Compound c = MyCompounds.get(i);
                     if(c.getSelected()){
-                        if(!c.getChemist().equals(InSlilicoPanel.getInstance().getUserName())){
+                        if(!c.getChemist().equals("anonymous") &&!c.getChemist().equals(userName)){
                             tryToRemoveOthersIdea+=1;
                         }else {
                             compoundsToRemove.add(c);
@@ -500,7 +505,7 @@ public class MyCompoundIdealPanel extends JPanel {
                 if(row_model>=0){
                     Compound compound = MyCompounds.get(row_model);
                     if(compound!=null){
-                        if(!compound.getChemist().equals(InSlilicoPanel.getInstance().getUserName())){
+                        if(!compound.getChemist().equals(userName)){
                             JOptionPane.showMessageDialog(MyCompoundIdealPanel.this,"You can only change your own idea");
                             return;
                         }
@@ -747,7 +752,6 @@ public class MyCompoundIdealPanel extends JPanel {
                 try{
                     Vector<Compound> compounds = (Vector<Compound>)get();
                     Vector<String> chemists = new Vector<>();
-                    chemists.add("All");
                     for(Compound cmpd:compounds){
                         String chemist = cmpd.getChemist();
                         if(!chemists.contains(chemist)){
@@ -1062,7 +1066,7 @@ public class MyCompoundIdealPanel extends JPanel {
                 try {
                     OEChemWebLicenseInstaller.loadOELicenseFromWeb();
 //                    LicenseManager.setLicenseFile("/Users/jfeng1/.chemaxon/license.cxl");
-                    LicenseManager.setLicenseFile("http://javelin.corp.My.com:8080/insilico/license.cxl");
+                    LicenseManager.setLicenseFile("http://10.74.2.128:8080/medchem_design/license.cxl");
                 } catch (IOException e) {
                     JOptionPane.showMessageDialog(null,e.getMessage());
                     return;
@@ -1123,7 +1127,7 @@ public class MyCompoundIdealPanel extends JPanel {
                         "  5  2  2  0  0  0  0\n" +
                         " 16 12  1  0  0  0  0\n" +
                         " 19 17  2  0  0  0  0\n" +
-                        "M  END\n","C1=CN2C=C(C=NC2=N1)C1=CC=CC2=C1C=CC=C2",null,"jfeng1", new Date(System.currentTimeMillis()),0,0, 0,1);
+                        "M  END\n","C1=CN2C=C(C=NC2=N1)C1=CC=CC2=C1C=CC=C2",null, new Date(System.currentTimeMillis()),0,0, 0,1);
                 cmpds.add(c);
                 MyCompoundIdealPanel p = new MyCompoundIdealPanel(new Project(1,"gsk"));
                 f.setJMenuBar(p.getJMenuBar());

@@ -168,13 +168,8 @@ public class DockingInputDialog extends JDialog {
 
     public static void main(String[] args) {
         JFrame f = new JFrame();
-        String buffer = "MLKL_BIO-0918847new\n" +
-                "CDK12_4NST\n" +
-                "IRAK4_BIO-0736524\n" +
-                "MLKL_BIO-0918847\n" +
-                "MLKL_BIO-0722425\n" +
+        String buffer = "CDK12_4NST\n" +
                 "IRAK4_1kocr\n" +
-                "FAK_BIO-0770701\n" +
                 "TTBK1_4NFN\n" +
                 "3VNG_A\n" +
                 "5CGJ\n" +
@@ -186,10 +181,7 @@ public class DockingInputDialog extends JDialog {
                 "4IQK_A\n" +
                 "4L7C_A\n" +
                 "3VNH_A\n" +
-                "4IFN_A\n" +
-                "IRAK4_BIO-0918018\n" +
-                "DAPK1_BIO-0774048\n" +
-                "IRAK4_BIO-0919408";
+                "4IFN_A\n";
         Vector<String> dockingList = new Vector<String>(Arrays.asList(buffer.split("\\n")));
 
         dockingList.add("IRAK4_BIO-0919408");

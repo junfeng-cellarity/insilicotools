@@ -18,7 +18,6 @@ public class Compound {
     String name;
     String smiles;
     byte[] cdx;
-    String chemist;
     Date date;
     Boolean selected = false;
     int status_id;
@@ -29,8 +28,8 @@ public class Compound {
     int rank;
     boolean isChanged = false;
     boolean rankingChanged = false;
-    public static String[] PROPERTIES_TO_USE = {"CLogP","molecular weight","2d PSA","CNS mTEMPO","CNS MPO","CY-NUMBER","CY-NUMBER(T)"};
-    public static Class[] PROPERTY_CLASS = {Double.class,Double.class,Double.class,Double.class,Double.class,String.class,String.class};
+    public static String[] PROPERTIES_TO_USE = {"CLogP","molecular weight","2d PSA","CY-NUMBER"};
+    public static Class[] PROPERTY_CLASS = {Double.class,Double.class,Double.class,String.class};
     PropertyMolecule propertyMolecule;
     boolean hasProperty = false;
 
@@ -39,13 +38,12 @@ public class Compound {
         return hasProperty;
     }
 
-    public Compound(int id, String name, String mol, String smiles, byte[] cdx, String chemist, Date date, int project_id, int status_id, int rank, int chemist_id) {
+    public Compound(int id, String name, String mol, String smiles, byte[] cdx, Date date, int project_id, int status_id, int rank, int chemist_id) {
         this.id = id;
         this.molecule = mol;
         this.name = name;
         this.smiles = smiles;
         this.cdx = cdx;
-        this.chemist = chemist;
         this.date = date;
         this.selected = false;
         this.status_id = status_id;
@@ -56,37 +54,42 @@ public class Compound {
         hasProperty = false;
     }
 
-    public Compound(int id, String name, String mol, String smiles, byte[] cdx, String chemist, Date date, int project_id, int status_id, int rank, int chemist_id, double clogp, double mw, double psa, double cns_tempo, double cns_mpo) {
+    public Compound(int id, String name, String mol, String smiles, byte[] cdx, Date date, int project_id, int status_id, int rank, int chemist_id, double clogp, double mw, double psa) {
         this.id = id;
         this.molecule = mol;
         this.name = name;
         this.smiles = smiles;
         this.cdx = cdx;
-        this.chemist = chemist;
         this.date = date;
         this.selected = false;
         this.status_id = status_id;
         this.project_id = project_id;
         this.rank = rank;
         this.chemist_id = chemist_id;
-        if(clogp==0.0&&mw==0.0&&psa==0.0&&cns_mpo==0.0&&cns_tempo==0.0){
+        if(clogp==0.0&&mw==0.0&&psa==0.0){
             hasProperty = false;
             updatePropertyMol();
         }else {
             hasProperty = true;
-            updatePropertyMol(clogp, mw, psa, cns_tempo, cns_mpo);
+            updatePropertyMol(clogp, mw, psa);
         }
     }
 
-    void updatePropertyMol(double clogp, double mw, double psa, double cns_tempo, double cns_mpo) {
+    void updatePropertyMol(double clogp, double mw, double psa) {
         OEGraphMol oemol = ChemFunc.getMolFromMolString(molecule, OEFormat.SDF);
         propertyMolecule = new PropertyMolecule(oemol);
         propertyMolecule.setName(this.name);
         propertyMolecule.addProperty("CLogP",new Double(clogp).toString());
         propertyMolecule.addProperty("molecular weight",new Double(mw).toString());
         propertyMolecule.addProperty("2d PSA", new Double(psa).toString());
-        propertyMolecule.addProperty("CNS mTEMPO", new Double(cns_tempo).toString());
-        propertyMolecule.addProperty("CNS MPO", new Double(cns_mpo).toString());
+    }
+
+    public String getChemist(){
+        if(chemist_id!=-1){
+            return FrontierDAO.getInstance().getAssignedChemist(chemist_id).chemist_name;
+        }else{
+            return null;
+        }
     }
 
     void updatePropertyMol() {
@@ -136,8 +139,8 @@ public class Compound {
         isChanged = true;
     }
 
-    public void setChemist(String chemist) {
-        this.chemist = chemist;
+    public void setChemistId(int chemist_id) {
+        this.chemist_id = chemist_id;
         isChanged = true;
     }
 
@@ -212,8 +215,8 @@ public class Compound {
         return cdx;
     }
 
-    public String getChemist() {
-        return chemist;
+    public int getChemistId() {
+        return chemist_id;
     }
 
     public Date getDate() {
