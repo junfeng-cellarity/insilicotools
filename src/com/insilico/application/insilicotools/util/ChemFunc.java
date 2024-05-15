@@ -67,6 +67,7 @@ public class ChemFunc {
     public static final HashMap<String,String> PROPERTY_DETAILS;
     public static HashMap<String,String> ADME_URLS;
     public static HashMap<String,String> ADME_KEYPROP;
+    public static HashMap<String,UnitConverter> ADME_Conversion;
     static{
         PROPERTY_DETAILS = new HashMap<String, String>();
         PROPERTY_DETAILS.put("ALogD","LogD by Schrodinger");
@@ -99,16 +100,24 @@ public class ChemFunc {
         ADME_URLS.put("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)","https://perm-public-endpoint-e6d7a6c9.cellarity.bentoml.ai/predict");
         ADME_URLS.put("Cellarity_hERG_IC50(uM)","https://herg-service-yatai.cellarity.bentoml.ai/predict");
         ADME_URLS.put("hepatocyte stability","https://hepstability-service-yatai.cellarity.bentoml.ai/predict");
+        ADME_URLS.put("hepatocyte clearance","https://hepstability-service-yatai.cellarity.bentoml.ai/predict");
         ADME_URLS.put("blood stability","https://bloodstability-service-yatai.cellarity.bentoml.ai/predict");
         ADME_URLS.put("plasma protein unbound(human)%","https://ppb-service-yatai.cellarity.bentoml.ai/predict");
+        ADME_URLS.put("Solubility(uM)","https://solubility-service-yatai.cellarity.bentoml.ai/predict");
 
         ADME_KEYPROP = new HashMap<>();
         ADME_KEYPROP.put("Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)","Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)");
         ADME_KEYPROP.put("Cellarity_hERG_IC50(uM)","Cellarity_hERG_IC50(uM)");
         ADME_KEYPROP.put("hepatocyte stability","predicted_label");
+        ADME_KEYPROP.put("hepatocyte clearance","Pred. CLint");
         ADME_KEYPROP.put("blood stability","probability_stable");
         ADME_KEYPROP.put("plasma protein unbound(human)%","Cellarity Plasma Human Unbound");
+        ADME_KEYPROP.put("Solubility(uM)","LogS");
 
+        ADME_Conversion = new HashMap<>();
+        ADME_Conversion.put("Solubility(uM)", new SolubilityConverter());
+
+        //ADME_Conversion.put("Solubility(uM)", (a) -> { } );
     }
 
     public static final String[] properties = {
@@ -130,8 +139,10 @@ public class ChemFunc {
             "Cellarity Model PGP-KO PAPP AB (10^6 cm/sec)",
             "Cellarity_hERG_IC50(uM)",
             "hepatocyte stability",
+            "hepatocyte clearance",
             "blood stability",
-            "plasma protein unbound(human)%"
+            "plasma protein unbound(human)%",
+            "Solubility(uM)"
 //                                                "hERG",
 //                                                "Papp A->B",
 //                                                "General Metabolic Stability: T1/2 (min) (Mouse)"
@@ -159,6 +170,17 @@ public class ChemFunc {
             "2d PSA"
     };
 
+    public static List<Vector<PropertyMolecule>> split_molecules(Vector<PropertyMolecule> mols, int batch_size){
+        List<Vector<PropertyMolecule>> splittedList = new ArrayList<>();
+        for(int i=0;i<mols.size();i+=batch_size){
+            Vector<PropertyMolecule> submols = new Vector<>();
+            for(int j=i;j<i+batch_size&&j<mols.size();j++){
+                submols.add(mols.get(j));
+            }
+            splittedList.add(submols);
+        }
+        return splittedList;
+    }
 
     public static String getBestLogP(Vector<String> selectedProperties){
         if(selectedProperties==null||selectedProperties.isEmpty()){
@@ -1644,7 +1666,13 @@ public class ChemFunc {
                         propertyValue = Double.toString((Double)propertyValueObj);
                     }
                     if(propertyValue!=null && propertyName.equals(ADME_KEYPROP.get(modelName))) {
-                        propertyMolecules.get(compound_id).addProperty(modelName, propertyValue);
+                        if(ADME_Conversion.containsKey(modelName)){
+                            UnitConverter converter = ADME_Conversion.get(modelName);
+                            converter.set_value(Double.parseDouble(propertyValue));
+                            propertyMolecules.get(compound_id).addProperty(modelName, String.format("%5.2f",converter.convert()));
+                        }else {
+                            propertyMolecules.get(compound_id).addProperty(modelName, propertyValue);
+                        }
                     }else{
                         System.out.println(property);
                     }
@@ -2667,13 +2695,23 @@ public class ChemFunc {
     }
 
     public static void main(String[] args) {
-        try {
-            testPost();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        Vector<String> a = new Vector<>();
+        Vector<String> b = new Vector<>();
+        String aa = "aaaa";
+        String bb = "bbbb";
+        a.add(aa);
+        a.add(bb);
+        b.add(aa);
+        System.out.println(a);
+        System.out.println(b);
+
+//        try {
+//            testPost();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private void test_msm(){

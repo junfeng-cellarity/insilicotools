@@ -628,7 +628,12 @@ public class InSlilicoPanel extends JPanel {
                                 //todo:
                                 for(String model:ChemFunc.adme_models){
                                     if(selectedProperties.contains(model)){
-                                        ChemFunc.runMLModels(molecules,model);
+                                        List<Vector<PropertyMolecule>> molVects = ChemFunc.split_molecules(molecules, 100);
+                                        int i=0;
+                                        for(Vector<PropertyMolecule> mols :molVects) {
+                                            System.out.println(mols.size()+" is calculating. "+ i++);
+                                            ChemFunc.runMLModels(mols, model);
+                                        }
                                     }
                                 }
 
