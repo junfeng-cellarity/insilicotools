@@ -10,12 +10,12 @@ import math
 import scipy.stats as stats
 
 OEThrow.SetLevel(OEErrorLevel_Error)
-directory = "/Users/junfeng/compound_database/"
-properties =   ["ExactMW","SlogP","TPSA (#1)","NumHBD","NumHBA","FractionCSP3"]
+directory = "/scr/jfeng/ChemicalSpace"
+properties =   ["mol_mass","logp","psa","h_bond_donors","h_bond_acceptors","fsp3"]
 propertyIsInt = [False,False,False,True,True,False]
 propertyTicks = [[300,350,400,450,500],[-3,-2,-1,0,1,2,3,4,5],[0,25,50,75,100,120,],[0,1,2,3,4,5],[0,1,2,3,4,5,6,7,8,9,10],[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]]
 #files = ["wuxi_descriptor.sdf","lifechemical_100k_descriptors.sdf","chemdiv_descriptors.sdf"]
-files = ["final_pick.sdf","scaffold_final_sim.sdf"]
+files = ["mcule_cellarity.sdf"]
 #files = ["lifechemical_100k_descriptors.sdf"]
 for file in files:
     libraryName = os.path.splitext(file)[0]

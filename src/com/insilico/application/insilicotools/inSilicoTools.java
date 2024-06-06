@@ -170,13 +170,13 @@ public class inSilicoTools extends JFrame{
 
                 if(OSValidator.isUnix()) {
                     inSilicoTools.getInstance().loadLibraryFromResource("libGraphMolWrap.so");
-                    inSilicoTools.getInstance().loadLibraryFromResource("libGLEW.so.1.5");
-                    inSilicoTools.getInstance().loadLibraryFromResource("libgluegen-rt.so");
-                    inSilicoTools.getInstance().loadLibraryFromResource("libjogl_desktop.so");
+//                    inSilicoTools.getInstance().loadLibraryFromResource("libGLEW.so.1.5");
+//                    inSilicoTools.getInstance().loadLibraryFromResource("libgluegen-rt.so");
+//                    inSilicoTools.getInstance().loadLibraryFromResource("libjogl_desktop.so");
 //                    inSilicoTools.getInstance().loadLibraryFromResource("libnativewindow_awt.so");
-                    inSilicoTools.getInstance().loadLibraryFromResource("libnativewindow_x11.so");
-                    inSilicoTools.getInstance().loadLibraryFromResource("libnewt.so");
-                    inSilicoTools.getInstance().loadLibraryFromResource("libjymol.so");
+//                    inSilicoTools.getInstance().loadLibraryFromResource("libnativewindow_x11.so");
+//                    inSilicoTools.getInstance().loadLibraryFromResource("libnewt.so");
+//                    inSilicoTools.getInstance().loadLibraryFromResource("libjymol.so");
                 }else if(OSValidator.isMac()){
                     inSilicoTools.getInstance().loadLibraryFromResource("libGraphMolWrap.jnilib");
                 }else{

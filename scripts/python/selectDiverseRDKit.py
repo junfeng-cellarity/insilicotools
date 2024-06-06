@@ -35,7 +35,8 @@ if __name__ == "__main__":
         smiles = OEMolToSmiles(oemol)
         rdmol = Chem.MolFromSmiles(smiles)
         if rdmol is not None:
-            mol_name = OEGetSDData(oemol,"IDNUMBER")
+            #mol_name = OEGetSDData(oemol,"IDNUMBER")
+            mol_name = oemol.GetTitle()
             rdmol.SetProp("_Name",mol_name)
             ms.append(rdmol)
             if mol_name in dict:
@@ -53,6 +54,7 @@ if __name__ == "__main__":
     picks = [dict[ms[x].GetProp("_Name")] for x in pickIndices]
     ofs = oemolostream()
     ofs.SetFormat(OEFormat_SDF)
+    ofs.open(sys.argv[3])
     for p in picks:
         OEWriteMolecule(ofs,p)
     ofs.close()
