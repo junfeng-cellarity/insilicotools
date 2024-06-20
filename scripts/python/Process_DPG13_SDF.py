@@ -20,7 +20,7 @@ wh_smartsDict = {
     "Cyano":["C#N"]
 }
 
-smarts_list = ["tetracyclic","macrocyclic","5,6-amino_pyrazole","other amino_pyrazole"]
+smarts_list = ["tetracyclic","macrocyclic","5,6-amino_pyrazole","6,6-amino_pyrazole and others"]
 wh_smarts_list = ["Acrylamide","Terminal Substituted Acrylamide","NonTerminal Substituted Acrylamide",
                   "Halo Acrylamide","Double Substituted Acrylamide","Alkynyl Amide","HaloAmide","Cyano"]
 PCE_List = [
